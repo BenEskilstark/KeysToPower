@@ -12,8 +12,11 @@
 - - - - - - - - TODO - - - - - - -
   - move all magic numbers into the config
   - compute loyalty for each person
-  - costs of workers
+    - what does each faction (per person) do when loyalty gets low
+    - faction leaders expect to move up in threshold
   - PetitionDialog
+  - faction-level resources
+    - each resource adds 1 to overall loyalty (loyalty of each person)
 
   - Simulation
     - resources for government
@@ -22,6 +25,7 @@
 
   - UI
     - display rates as %'s
+    - faction InfoCard should be split into resources, finances, aggregate info
   - Petitions
     - making your own petitions
   - Skills
@@ -29,20 +33,20 @@
 
 - - - - - - resource breakdown by faction - - - - -
   - army
-    - makes: terror, land
+    - makes: coercion, land
     - needs: money, production
   - workers
     - makes: production, money
-    - needs: terror, legitimacy
+    - needs: coercion, legitimacy
   - secret police:
-    - makes: terror, legitimacy
+    - makes: coercion, legitimacy
     - needs: money, production
   - clergy:
     - makes: legitimacy
     - needs: money, production, land
   - business:
     - makes: money, production
-    - needs: legitimacy, terror, land
+    - needs: legitimacy, coercion, land
   - parliament:
     - makes: legitimacy
     - needs: money

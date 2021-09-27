@@ -91,7 +91,7 @@ const computeGovFactors = (gov) => {
     name: 'Army Tanks',
   });
   gov.coercion.factors.push({
-    value: gov.factions["Secret Police"].surveillance.value,
+    value: gov.factions["Secret Police"].censorship.value,
     name: 'Police Surveillance',
   });
 

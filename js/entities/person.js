@@ -20,12 +20,7 @@ import type {
 
 const makePerson = (faction: FactionName, title: ?Title): Person => {
   const person = {
-    name: oneOf(['Hugo', 'Josef', 'Augusto', 'Fidel', 'George', 'John', 'Karl', 'Adolf']) +
-      " " +
-      oneOf([
-        'Mao', 'Castro', 'Marx', 'Stalin', 'Tito', 'Bush', 'Johnson', 'Nehru',
-        'Ortega', 'Chavez', 'Sandino', 'Morales', 'Chamorro', 'Somoza',
-      ]),
+    name: oneOf(config.firstNames) + " " + oneOf(config.lastNames),
     faction,
     title,
     isPlayer: false,
@@ -34,123 +29,30 @@ const makePerson = (faction: FactionName, title: ?Title): Person => {
     money: makeValue(0),
     income: 0,
 
-    corruption: makeValue(0),
-    disposition: oneOf(['zealot', 'realist', 'moderate', 'idealist', 'radical']),
+    corruption: makeValue(config[faction].corruption),
+    disposition: oneOf(config.dispositions),
     traits: [],
     desires: [],
     skills: [],
-    // favorability: {
-    //   'Army': getInitialFavorability(faction, 'Army'),
-    //   'Workers': getInitialFavorability(faction, 'Workers'),
-    //   'Secret Police': getInitialFavorability(faction, 'Secret Police'),
-    //   'Clergy': getInitialFavorability(faction, 'Clergy'),
-    //   'Business': getInitialFavorability(faction, 'Business'),
-    //   'Parliament': getInitialFavorability(faction, 'Parliament'),
-    // },
-    loyalty: makeValue(randomIn(-100, 100)),
+    loyalty: makeValue(normalIn(config[faction])),
   };
 
-  switch (person.disposition) {
-    case 'zealot': {
 
-      break;
-    }
-    case 'realist': {
+  // effects of faction
 
-      break;
-    }
-    case 'moderate': {
-
-      break;
-    }
-    case 'idealist': {
-
-      break;
-    }
-    case 'radical': {
-
-      break;
-    }
-  }
-
+  // effects of title
   if (!title) person.title = oneOf(factionTitles[faction]);
-  switch (faction) {
-    case 'Army': {
-      person.money = makeValue(isMiddleClass());
-      person.income = 5000;
-      if (Math.random() < 0.5) {
-        person.traits.push('Aggressive');
-      }
-      break;
-    }
-    case 'Workers': {
-      person.money = makeValue(isPoor());
-      if (Math.random() < 0.5) {
-        person.traits.push('Moderate');
-      }
-      break;
-    }
-    case 'Secret Police': {
-      person.money = makeValue(isRich());
-      person.income = 5000;
-      if (Math.random() < 0.5) {
-        person.traits.push('Cruel');
-      }
-      break;
-    }
-    case 'Clergy': {
-      person.money = makeValue(isMiddleClass());
-      person.income = 5000;
-      if (Math.random() < 0.5) {
-        person.traits.push('Generous');
-      }
-      break;
-    }
-    case 'Business': {
-      person.money = makeValue(isFilthyRich());
-      person.corruption.factors.push({
-        name: 'Tax Loop Holes',
-        value: 0.4,
-      });
-      if (Math.random() < 0.8) {
-        person.traits.push('Greedy');
-      }
-      break;
-    }
-    case 'Parliament': {
-      person.income = 5000;
-      person.money = makeValue(isRich());
-      break;
-    }
-  }
-  if (Math.random() < 0.3) {
-    person.traits.push(oneOf(config.traits));
-  }
+
+  // effects of disposition
+
+  // effects of traits
+  // if (Math.random() < 0.3) {
+  //   person.traits.push(oneOf(config.traits));
+  // }
 
   return person;
 }
 
-const isFilthyRich = () => {
-  return normalIn(1000000, 10000000);
-};
-const isRich = () => {
-  return normalIn(100000, 1000000);
-};
-const isMiddleClass = () => {
-  return randomIn(50000, 200000);
-};
-const isPoor = () => {
-  return randomIn(1000, 30000);
-};
-const isDirtPoor = () => {
-  return randomIn(0, 10000);
-};
-
 module.exports = {
   makePerson,
-  isFilthyRich,
-  isRich,
-  isMiddleClass,
-  isPoor,
-  isDirtPoor,
 };

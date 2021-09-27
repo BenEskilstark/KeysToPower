@@ -12,7 +12,7 @@ export type Faction = {
   taxRate: SimulatedValue,
   minimumWage: Dollar,
   workHours: SimulatedValue,
-  surveillance: SimulatedValue,
+  censorship: SimulatedValue,
   propaganda: SimulatedValue,
   tithe: SimulatedValue,
   churches: SimulatedValue,

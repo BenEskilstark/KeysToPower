@@ -121,7 +121,7 @@ const makeFaction = (name: FactionName, governmentFaction: FactionName): Faction
       break;
     }
     case 'Secret Police': {
-      faction.surveillance = randomIn(0, 20);
+      faction.censorship = randomIn(0, 20);
       faction.propaganda = randomIn(0, 10);
       faction.land = 5;
 
