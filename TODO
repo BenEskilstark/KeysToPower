@@ -2,7 +2,6 @@
 - - - - - - Simulation Issues - - - - - - -
   - disposition vs traits -- how should people vary?
   - everyone's money just goes up except yours
-    - costs of workers
     - corruption for gov salaries?
   - resources
     - how does parliament create legitimacy -- what is its resource?
@@ -13,6 +12,7 @@
 - - - - - - - - TODO - - - - - - -
   - move all magic numbers into the config
   - compute loyalty for each person
+  - costs of workers
   - PetitionDialog
 
   - Simulation
