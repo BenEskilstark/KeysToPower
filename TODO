@@ -1,0 +1,48 @@
+
+- - - - - - Simulation Issues - - - - - - -
+  - disposition vs traits -- how should people vary?
+  - everyone's money just goes up except yours
+    - costs of workers
+    - corruption for gov salaries?
+  - resources
+    - how does parliament create legitimacy -- what is its resource?
+  - how to correlate petitions that you pass w/people's desires?
+  - how do people spend money?
+
+
+- - - - - - - - TODO - - - - - - -
+  - move all magic numbers into the config
+  - switch loyalty to favorability
+
+  - Simulation
+    - resources for government
+      - money
+    - compute loyalty for each person
+
+  - UI
+    - display rates as %'s
+    - PetitionDialog
+  - Petitions
+    - making your own petitions
+  - Skills
+
+
+- - - - - - resource breakdown by faction - - - - -
+  - army
+    - makes: terror, land
+    - needs: money, production
+  - workers
+    - makes: production, money
+    - needs: terror, legitimacy
+  - secret police:
+    - makes: terror, legitimacy
+    - needs: money, production
+  - clergy:
+    - makes: legitimacy
+    - needs: money, production, land
+  - business:
+    - makes: money, production
+    - needs: legitimacy, terror, land
+  - parliament:
+    - makes: legitimacy
+    - needs: money
