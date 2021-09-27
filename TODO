@@ -11,6 +11,7 @@
 
 - - - - - - - - TODO - - - - - - -
   - move all magic numbers into the config
+  - compute all faction/person properties ECS-style
   - compute loyalty for each person
     - what does each faction (per person) do when loyalty gets low
     - faction leaders expect to move up in threshold

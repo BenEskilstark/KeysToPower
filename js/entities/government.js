@@ -8,13 +8,12 @@ const {
   makePerson, isFilthyRich, isRich, isMiddleClass,
 } = require('../entities/person');
 const {
-  randomFaction, factionTitles,
-  leadershipTitle, governmentTitle,
+  randomFaction,
 } = require('../utils/factions');
 const {
   makeValue,
 } = require('../utils/simulatedValues');
-const {config} = require('../config');
+const {config, prototype} = require('../config');
 
 import type {
   FactionName, Person, Faction, Dollar,
@@ -23,8 +22,7 @@ import type {
 
 const makeRandomGovernment = () => {
   const faction = randomFaction();
-  const leader = makePerson(faction, leadershipTitle(faction));
-  leader.money = isFilthyRich();
+  const leader = makePerson(faction, config.leadershipTitles[faction]);
 
   const factions = {
     Army: makeFaction('Army', faction),
@@ -37,7 +35,7 @@ const makeRandomGovernment = () => {
 
   const gov = {
     leader,
-    type: governmentTitle(faction),
+    type: config.governmentTitles[faction],
     factions,
     population: [
       ...factions["Army"].people,
@@ -94,78 +92,26 @@ const makeFaction = (name: FactionName, governmentFaction: FactionName): Faction
     people: [],
     land: 0,
   };
-  const titles = factionTitles(name);
-  let leadershipNumA = 1;
-  let leadershipNumB = 3;
+  const titles = config.factionTitles[name];
 
-  switch (name) {
-    case 'Army': {
-      faction.tanks = randomIn(5, 50);
-      faction.land = 5;
-      if (isGovernmentFaction) {
-        faction.tanks += 30;
-      }
+  // set faction resources
 
-      // leadershipNumA = randomIn(1,3);
-      leadershipNumB = randomIn(3,6);
-      break;
-    }
-    case 'Workers': {
-      faction.taxRate = 0.5;
-      faction.minimumWage = 100;
-      faction.workHours = 60;
+  // set faction finances
 
-      // leadershipNumA = randomIn(5,8);
-      leadershipNumB = randomIn(5,8);
-      faction.land = leadershipNumA + leadershipNumB;
-      break;
-    }
-    case 'Secret Police': {
-      faction.censorship = randomIn(0, 20);
-      faction.propaganda = randomIn(0, 10);
-      faction.land = 5;
+  // set faction people
+  const leader = makePerson(name, titles[0]);
+  leader.isLeader = true;
+  leader.income *= 2;
+  faction.people.push(leader);
 
-      // leadershipNumA = 1;
-      leadershipNumB = randomIn(2,3);
-      break;
-    }
-    case 'Clergy': {
-      faction.tithe = isGovernmentFaction ? 0.4 : 0.1;
-      faction.churches = 1;
-      faction.land = 10;
-
-      // leadershipNumA = randomIn(1,3);
-      leadershipNumB = randomIn(3,6);
-      break;
-    }
-    case 'Business': {
-      faction.taxRate = isGovernmentFaction ? 0.1 : 0.25;
-      faction.regulation = isGovernmentFaction ? 0 : 10;
-      faction.land = 5;
-      faction.factories = 1;
-
-      // leadershipNumA = randomIn(3,5);
-      leadershipNumB = randomIn(2,5);
-      break;
-    }
-    case 'Parliament': {
-      // leadershipNumA = 1;
-      leadershipNumB = randomIn(4,8);
-      faction.land = 5;
-      break;
-    }
-  }
-
-  for (let i = 0; i < leadershipNumA; i++) {
-    const leader = makePerson(name, titles[0]);
-    leader.isLeader = true;
-    leader.income *= 2;
-    faction.people.push(leader);
-  }
-  for (let i = 0; i < leadershipNumB; i++) {
+  for (let i = 0; i < prototype[faction].numPeople - 1; i++) {
     faction.people.push(makePerson(name, titles[1]));
   }
 
+  // set faction information
+
+
+  // turn everything into values
   for (const resource of config.factionResources) {
     if (faction[resource] == null) continue;
     faction[resource] = makeValue(faction[resource]);

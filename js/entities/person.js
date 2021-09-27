@@ -29,12 +29,15 @@ const makePerson = (faction: FactionName, title: ?Title): Person => {
     money: makeValue(0),
     income: 0,
 
-    corruption: makeValue(config[faction].corruption),
+    corruption: makeValue(prototype[faction].corruption),
     disposition: oneOf(config.dispositions),
     traits: [],
     desires: [],
     skills: [],
-    loyalty: makeValue(normalIn(config[faction])),
+    loyalty: makeValue(normalIn(
+      prototype[faction].loyalty - 5,
+      prototype[faction.loyalty] + 5,
+    )),
   };
 
 

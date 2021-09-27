@@ -6,45 +6,6 @@ const {config} = require('../config');
 const randomFaction = () => oneOf(config.factions);
 
 ////////////////////////////////////////////////////////////
-// Titles
-////////////////////////////////////////////////////////////
-const titles = {
-  Army: ['General', 'Colonel'],
-  Workers: ['Union Leader', 'Foreman'],
-  ["Secret Police"]: ['Captain', 'Agent'],
-  Clergy: ['Cardinal', 'Priest'],
-  Business: ['CEO', 'VP'],
-  Parliament: ['Minister', 'Representative'],
-};
-const factionTitles = (faction) => {
-  return titles[faction];
-};
-
-const leadershipTitles = {
-  Army: 'Generalissimo',
-  Workers: 'Comrade',
-  ["Secret Police"]: 'Director',
-  Clergy: 'Prophet',
-  Business: 'Chairman',
-  Parliament: 'President',
-};
-const leadershipTitle = (faction) => {
-  return leadershipTitles[faction];
-}
-
-const governmentTitles = {
-  Army: 'Military Junta',
-  Workers: 'People\'s Dictatorship',
-  ["Secret Police"]: 'Police State',
-  Clergy: 'Theocracy',
-  Business: 'Trade Syndicate',
-  Parliament: 'Republic',
-}
-const governmentTitle = (faction) => {
-  return governmentTitles[faction];
-}
-
-////////////////////////////////////////////////////////////
 // Favorability
 ////////////////////////////////////////////////////////////
 

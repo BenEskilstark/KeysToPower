@@ -2,6 +2,30 @@
 
 const config = {
   factions: ['Army', 'Secret Police', 'Business', 'Workers', 'Clergy', 'Parliament'],
+  leadershipTitles: {
+    Army: 'Generalissimo',
+    Workers: 'Comrade',
+    ["Secret Police"]: 'Director',
+    Clergy: 'Prophet',
+    Business: 'Chairman',
+    Parliament: 'President',
+  },
+  titles: {
+    Army: ['General', 'Colonel'],
+    Workers: ['Union Leader', 'Foreman'],
+    ["Secret Police"]: ['Captain', 'Agent'],
+    Clergy: ['Cardinal', 'Priest'],
+    Business: ['CEO', 'VP'],
+    Parliament: ['Minister', 'Representative'],
+  },
+  governmentTitles: {
+    Army: 'Military Junta',
+    Workers: 'People\'s Dictatorship',
+    ["Secret Police"]: 'Police State',
+    Clergy: 'Theocracy',
+    Business: 'Trade Syndicate',
+    Parliament: 'Republic',
+  },
   // traits: ['Greedy', 'Aggressive', 'Cruel', 'Moderate', 'Generous'],
 
   // resources
@@ -28,23 +52,32 @@ const config = {
   upperThresholdMultiplier: 10,
 
   // people
-  firstNames: ['Hugo', 'Josef', 'Augusto', 'Fidel', 'George', 'John', 'Karl', 'Adolf'],
+  firstNames: [
+    'Hugo', 'Josef', 'Augusto', 'Fidel', 'George', 'John', 'Karl', 'Adolf',
+    'Pablo', 'Andrew', 'Winston', 'Joshua', 'Dwight', 'Pol', 'Vladimir',
+    'Leon', 'Violeta', 'Rosario', 'Elizabeth',
+  ],
   lastNames: [
     'Mao', 'Castro', 'Marx', 'Stalin', 'Tito', 'Bush', 'Johnson', 'Nehru',
     'Ortega', 'Chavez', 'Sandino', 'Morales', 'Chamorro', 'Somoza',
+    'Chamberlain', 'Churchill', 'Jackson', 'Kennedy', 'Franklin',
+    'Truman', 'MacArthur', 'Lenin', 'Trotsky',
   ],
   dispositions: ['zealot', 'realist', 'moderate', 'idealist', 'radical'],
 
 };
 
 const prototype = {
+  ///////////////////////////////////////////////////////
+  // BUSINESS
   Business: {
     moneyThreshold: 'Rich',
     money: config.moneyThresholds['Rich'],
 
-    // information
+    // derived information
     loyalty: 0,
     corruption: 30,
+    numPeople: 4,
 
     // resources
     land: 5,
@@ -57,13 +90,23 @@ const prototype = {
     workHours: 60,
     costs: -500,
   },
+  CEO: {
+    moneyThreshold: 'Filthy Rich',
+  },
+  VP: {
+
+  },
+
+  ///////////////////////////////////////////////////////
+  // ARMY
   Army: {
     moneyThreshold: 'Middle Class',
     money: config.moneyThresholds['Middle Class'],
 
-    // information
+    // derived information
     loyalty: 10,
     corruption: 10,
+    numPeople: 3,
 
     // resources
     land: 5,
@@ -73,13 +116,23 @@ const prototype = {
     income: 1000,
     costs: -500,
   },
+  General: {
+    moneyThreshold: 'Rich',
+  },
+  Colonel: {
+
+  },
+
+  ///////////////////////////////////////////////////////
+  // CLERGY
   Clergy: {
     moneyThreshold: 'Poor',
     money: config.moneyThresholds['Poor'],
 
-    // information
+    // derived information
     loyalty: 5,
     corruption: 0,
+    numPeople: 4,
 
     // resources
     land: 5,
@@ -89,13 +142,23 @@ const prototype = {
     // finances
     costs: -1000,
   },
+  Cardinal: {
+
+  },
+  Priest: {
+
+  },
+
+  ///////////////////////////////////////////////////////
+  // WORKERS
   Workers: {
     moneyThreshold: 'Dirt Poor',
     money: config.moneyThresholds['Dirt Poor'],
 
-    // information
+    // derived information
     loyalty: -5,
     corruption: 0,
+    numPeople: 7,
 
     // finances
     income: 1,
@@ -107,13 +170,23 @@ const prototype = {
     // resources
     land: 1,
   },
+  ["Union Leader"]: {
+    moneyThreshold: 'Middle Class',
+  },
+  Foreman: {
+
+  },
+
+  ///////////////////////////////////////////////////////
+  // Secret Police
   ["Secret Police"]: {
     moneyThreshold: 'Middle Class',
     money: config.moneyThresholds['Middle Class'],
 
-    // information
+    // derived information
     loyalty: 10,
     corruption: 10,
+    numPeople: 2,
 
     // resources
     land: 5,
@@ -124,13 +197,23 @@ const prototype = {
     income: 1000,
     costs: -500,
   },
+  Captain: {
+    moneyThreshold: 'Filthy Rich',
+  },
+  Agent: {
+
+  },
+
+  ///////////////////////////////////////////////////////
+  // PARLIAMENT
   Parliament: {
     moneyThreshold: 'Middle Class',
     money: config.moneyThresholds['Middle Class'],
 
-    // information
+    // derived information
     loyalty: 5,
     corruption: 10,
+    numPeople: 4,
 
     // resources
     land: 5,
@@ -139,6 +222,13 @@ const prototype = {
     income: 1000,
     costs: -500,
   },
+  Minister: {
+    moneyThreshold: 'Rich',
+  },
+  Representative: {
+
+  },
+
 };
 
 module.exports = {config, prototype};
