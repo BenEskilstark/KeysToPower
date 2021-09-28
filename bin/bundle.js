@@ -1,13 +1,181 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 'use strict';
 
+var _leadershipTitles, _titles, _governmentTitles, _moneyThresholds, _prototype;
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var config = {
-  factions: ['Army', 'Secret Police', 'Business', 'Clergy', 'Parliament', 'Workers'],
-  traits: ['Greedy', 'Aggressive', 'Cruel', 'Moderate', 'Generous'],
-  factionResources: ['land', 'tanks', 'taxRate', 'minimumWage', 'workHours', 'surveillance', 'propaganda', 'tithe', 'churches', 'regulation', 'factories']
+  factions: ['Army', 'Secret Police', 'Business', 'Workers', 'Clergy', 'Parliament'],
+  leadershipTitles: (_leadershipTitles = {
+    Army: 'Generalissimo',
+    Workers: 'Comrade'
+  }, _defineProperty(_leadershipTitles, "Secret Police", 'Director'), _defineProperty(_leadershipTitles, 'Clergy', 'Prophet'), _defineProperty(_leadershipTitles, 'Business', 'Chairman'), _defineProperty(_leadershipTitles, 'Parliament', 'President'), _leadershipTitles),
+  titles: (_titles = {
+    Army: ['General', 'Colonel'],
+    Workers: ['Union Leader', 'Foreman']
+  }, _defineProperty(_titles, "Secret Police", ['Captain', 'Agent']), _defineProperty(_titles, 'Clergy', ['Cardinal', 'Priest']), _defineProperty(_titles, 'Business', ['CEO', 'VP']), _defineProperty(_titles, 'Parliament', ['Minister', 'Representative']), _titles),
+  governmentTitles: (_governmentTitles = {
+    Army: 'Military Junta',
+    Workers: 'People\'s Dictatorship'
+  }, _defineProperty(_governmentTitles, "Secret Police", 'Police State'), _defineProperty(_governmentTitles, 'Clergy', 'Theocracy'), _defineProperty(_governmentTitles, 'Business', 'Trade Syndicate'), _defineProperty(_governmentTitles, 'Parliament', 'Republic'), _governmentTitles),
+  // traits: ['Greedy', 'Aggressive', 'Cruel', 'Moderate', 'Generous'],
+
+  // resources
+  governmentResources: ['money', 'production', 'coercion', 'legitimacy', 'land'],
+  factionResources: ['land', 'tanks', 'taxRate', 'minimumWage', 'workHours', 'censorship', 'propaganda', 'tithe', 'churches', 'regulation', 'factories'],
+  personResources: ['money', 'corruption', 'loyalty', 'costs'],
+
+  // money
+  moneyThresholds: (_moneyThresholds = {}, _defineProperty(_moneyThresholds, 'Filthy Rich', 1000000), _defineProperty(_moneyThresholds, 'Rich', 100000), _defineProperty(_moneyThresholds, "Middle Class", 10000), _defineProperty(_moneyThresholds, 'Poor', 1000), _defineProperty(_moneyThresholds, "Dirt Poor", 100), _moneyThresholds),
+  upperThresholdMultiplier: 10,
+
+  // people
+  firstNames: ['Hugo', 'Josef', 'Augusto', 'Fidel', 'George', 'John', 'Karl', 'Adolf', 'Pablo', 'Andrew', 'Winston', 'Joshua', 'Dwight', 'Pol', 'Vladimir', 'Leon', 'Violeta', 'Rosario', 'Elizabeth'],
+  lastNames: ['Mao', 'Castro', 'Marx', 'Stalin', 'Tito', 'Bush', 'Johnson', 'Nehru', 'Ortega', 'Chavez', 'Sandino', 'Morales', 'Chamorro', 'Somoza', 'Chamberlain', 'Churchill', 'Jackson', 'Kennedy', 'Franklin', 'Truman', 'MacArthur', 'Lenin', 'Trotsky'],
+  dispositions: ['zealot', 'realist', 'moderate', 'idealist', 'radical']
+
 };
 
-module.exports = { config: config };
+var prototype = (_prototype = {
+  ///////////////////////////////////////////////////////
+  // BUSINESS
+  Business: {
+    moneyThreshold: 'Rich',
+    money: config.moneyThresholds['Rich'],
+
+    // derived information
+    loyalty: 0,
+    corruption: 30,
+    numPeople: 4,
+
+    // resources
+    land: 5,
+    factories: 1,
+
+    // finances
+    income: 0, // computed later
+    taxRate: 0.5,
+    minimumWage: 1,
+    workHours: 60,
+    costs: -500
+  },
+  CEO: {
+    moneyThreshold: 'Filthy Rich'
+  },
+  VP: {},
+
+  ///////////////////////////////////////////////////////
+  // ARMY
+  Army: {
+    moneyThreshold: 'Middle Class',
+    money: config.moneyThresholds['Middle Class'],
+
+    // derived information
+    loyalty: 10,
+    corruption: 10,
+    numPeople: 3,
+
+    // resources
+    land: 5,
+    tanks: 10,
+
+    // finances
+    income: 1000,
+    costs: -500
+  },
+  General: {
+    moneyThreshold: 'Rich'
+  },
+  Colonel: {},
+
+  ///////////////////////////////////////////////////////
+  // CLERGY
+  Clergy: {
+    moneyThreshold: 'Poor',
+    money: config.moneyThresholds['Poor'],
+
+    // derived information
+    loyalty: 5,
+    corruption: 0,
+    numPeople: 4,
+
+    // resources
+    land: 5,
+    churches: 1,
+    tithe: 10,
+
+    // finances
+    income: 0, // computed later
+    costs: -1000
+  },
+  Cardinal: {},
+  Priest: {},
+
+  ///////////////////////////////////////////////////////
+  // WORKERS
+  Workers: {
+    moneyThreshold: 'Dirt Poor',
+    money: config.moneyThresholds['Dirt Poor'],
+
+    // derived information
+    loyalty: -5,
+    corruption: 0,
+    numPeople: 7,
+
+    // finances
+    income: 0, // computed later
+    minimumWage: 1,
+    taxRate: 0.5,
+    workHours: 60,
+    costs: -1,
+
+    // resources
+    land: 1
+  }
+}, _defineProperty(_prototype, "Union Leader", {
+  moneyThreshold: 'Middle Class'
+}), _defineProperty(_prototype, 'Foreman', {}), _defineProperty(_prototype, "Secret Police", {
+  moneyThreshold: 'Middle Class',
+  money: config.moneyThresholds['Middle Class'],
+
+  // derived information
+  loyalty: 10,
+  corruption: 10,
+  numPeople: 2,
+
+  // resources
+  land: 5,
+  propaganda: 1,
+  censorship: 1,
+
+  // finances
+  income: 1000,
+  costs: -500
+}), _defineProperty(_prototype, 'Captain', {
+  moneyThreshold: 'Filthy Rich'
+}), _defineProperty(_prototype, 'Agent', {}), _defineProperty(_prototype, 'Parliament', {
+  moneyThreshold: 'Middle Class',
+  money: config.moneyThresholds['Middle Class'],
+
+  // derived information
+  loyalty: 5,
+  corruption: 10,
+  numPeople: 4,
+
+  // resources
+  land: 5,
+
+  // finances
+  income: 1000,
+  costs: -500
+}), _defineProperty(_prototype, 'Minister', {
+  moneyThreshold: 'Rich'
+}), _defineProperty(_prototype, 'Representative', {}), _prototype);
+
+window.prototype = prototype;
+window.config = config;
+module.exports = { config: config, prototype: prototype };
 },{}],2:[function(require,module,exports){
 'use strict';
 
@@ -28,31 +196,28 @@ var _require2 = require('../entities/person'),
     isMiddleClass = _require2.isMiddleClass;
 
 var _require3 = require('../utils/factions'),
-    randomFaction = _require3.randomFaction,
-    factionTitles = _require3.factionTitles,
-    leadershipTitle = _require3.leadershipTitle,
-    governmentTitle = _require3.governmentTitle;
+    randomFaction = _require3.randomFaction;
 
 var _require4 = require('../utils/simulatedValues'),
     makeValue = _require4.makeValue;
 
 var _require5 = require('../config'),
-    config = _require5.config;
+    config = _require5.config,
+    prototype = _require5.prototype;
 
 var makeRandomGovernment = function makeRandomGovernment() {
   var _factions;
 
   var faction = randomFaction();
-  var leader = makePerson(faction, leadershipTitle(faction));
-  leader.money = isFilthyRich();
+  // const leader = makePerson(faction, config.leadershipTitles[faction]);
 
   var factions = (_factions = {
     Army: makeFaction('Army', faction)
   }, _defineProperty(_factions, "Secret Police", makeFaction('Secret Police', faction)), _defineProperty(_factions, 'Business', makeFaction('Business', faction)), _defineProperty(_factions, 'Clergy', makeFaction('Clergy', faction)), _defineProperty(_factions, 'Parliament', makeFaction('Parliament', faction)), _defineProperty(_factions, 'Workers', makeFaction('Workers', faction)), _factions);
 
   var gov = {
-    leader: leader,
-    type: governmentTitle(faction),
+    // leader,
+    type: config.governmentTitles[faction],
     factions: factions,
     population: [].concat(_toConsumableArray(factions["Army"].people), _toConsumableArray(factions["Workers"].people), _toConsumableArray(factions["Secret Police"].people), _toConsumableArray(factions["Clergy"].people), _toConsumableArray(factions["Business"].people), _toConsumableArray(factions["Parliament"].people)),
 
@@ -60,7 +225,7 @@ var makeRandomGovernment = function makeRandomGovernment() {
     turn: 0,
 
     coercion: makeValue(0),
-    money: makeValue(isFilthyRich()),
+    money: makeValue(config.moneyThresholds['Filthy Rich']),
     production: makeValue(0),
     legitimacy: makeValue(0),
     land: makeValue(100, 'Total National Land')
@@ -94,92 +259,16 @@ var makeRandomGovernment = function makeRandomGovernment() {
   return gov;
 };
 
-var makeFaction = function makeFaction(name, governmentFaction) {
-  var isGovernmentFaction = name == governmentFaction;
+var makeFaction = function makeFaction(factionName, governmentFaction) {
+  var isGovernmentFaction = factionName == governmentFaction;
 
   var faction = {
-    name: name,
-    people: [],
-    land: 0
+    name: factionName,
+    people: []
   };
-  var titles = factionTitles(name);
-  var leadershipNumA = 1;
-  var leadershipNumB = 3;
+  var titles = config.titles[factionName];
 
-  switch (name) {
-    case 'Army':
-      {
-        faction.tanks = randomIn(5, 50);
-        faction.land = 5;
-        if (isGovernmentFaction) {
-          faction.tanks += 30;
-        }
-
-        // leadershipNumA = randomIn(1,3);
-        leadershipNumB = randomIn(3, 6);
-        break;
-      }
-    case 'Workers':
-      {
-        faction.taxRate = 0.5;
-        faction.minimumWage = 100;
-        faction.workHours = 60;
-
-        // leadershipNumA = randomIn(5,8);
-        leadershipNumB = randomIn(5, 8);
-        faction.land = leadershipNumA + leadershipNumB;
-        break;
-      }
-    case 'Secret Police':
-      {
-        faction.surveillance = randomIn(0, 20);
-        faction.propaganda = randomIn(0, 10);
-        faction.land = 5;
-
-        // leadershipNumA = 1;
-        leadershipNumB = randomIn(2, 3);
-        break;
-      }
-    case 'Clergy':
-      {
-        faction.tithe = isGovernmentFaction ? 0.4 : 0.1;
-        faction.churches = 1;
-        faction.land = 10;
-
-        // leadershipNumA = randomIn(1,3);
-        leadershipNumB = randomIn(3, 6);
-        break;
-      }
-    case 'Business':
-      {
-        faction.taxRate = isGovernmentFaction ? 0.1 : 0.25;
-        faction.regulation = isGovernmentFaction ? 0 : 10;
-        faction.land = 5;
-        faction.factories = 1;
-
-        // leadershipNumA = randomIn(3,5);
-        leadershipNumB = randomIn(2, 5);
-        break;
-      }
-    case 'Parliament':
-      {
-        // leadershipNumA = 1;
-        leadershipNumB = randomIn(4, 8);
-        faction.land = 5;
-        break;
-      }
-  }
-
-  for (var i = 0; i < leadershipNumA; i++) {
-    var leader = makePerson(name, titles[0]);
-    leader.isLeader = true;
-    leader.income *= 2;
-    faction.people.push(leader);
-  }
-  for (var _i = 0; _i < leadershipNumB; _i++) {
-    faction.people.push(makePerson(name, titles[1]));
-  }
-
+  // set faction resources/finances
   var _iteratorNormalCompletion = true;
   var _didIteratorError = false;
   var _iteratorError = undefined;
@@ -188,9 +277,11 @@ var makeFaction = function makeFaction(name, governmentFaction) {
     for (var _iterator = config.factionResources[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
       var resource = _step.value;
 
-      if (faction[resource] == null) continue;
-      faction[resource] = makeValue(faction[resource]);
+      if (prototype[factionName][resource] == null) continue;
+      faction[resource] = makeValue(prototype[factionName][resource]);
     }
+
+    // set faction people
   } catch (err) {
     _didIteratorError = true;
     _iteratorError = err;
@@ -206,6 +297,18 @@ var makeFaction = function makeFaction(name, governmentFaction) {
     }
   }
 
+  var leader = makePerson(factionName, titles[0]);
+  leader.isLeader = true;
+  leader.income *= 2;
+  faction.people.push(leader);
+
+  for (var i = 0; i < prototype[factionName].numPeople - 1; i++) {
+    faction.people.push(makePerson(factionName, titles[1]));
+  }
+
+  // set faction information
+  // TODO
+
   return faction;
 };
 
@@ -216,7 +319,8 @@ module.exports = {
 'use strict';
 
 var _require = require('../config'),
-    config = _require.config;
+    config = _require.config,
+    prototype = _require.prototype;
 
 var _require2 = require('../utils/stochastic'),
     oneOf = _require2.oneOf,
@@ -234,145 +338,96 @@ var _require4 = require('../utils/simulatedValues'),
 
 var makePerson = function makePerson(faction, title) {
   var person = {
-    name: oneOf(['Hugo', 'Josef', 'Augusto', 'Fidel', 'George', 'John', 'Karl', 'Adolf']) + " " + oneOf(['Mao', 'Castro', 'Marx', 'Stalin', 'Tito', 'Bush', 'Johnson', 'Nehru', 'Ortega', 'Chavez', 'Sandino', 'Morales', 'Chamorro', 'Somoza']),
+    name: oneOf(config.firstNames) + " " + oneOf(config.lastNames),
     faction: faction,
     title: title,
     isPlayer: false,
     isLeader: false,
 
     money: makeValue(0),
-    income: 0,
+    income: prototype[faction].income,
 
-    corruption: makeValue(0),
-    disposition: oneOf(['zealot', 'realist', 'moderate', 'idealist', 'radical']),
+    corruption: makeValue(prototype[faction].corruption),
+    disposition: oneOf(config.dispositions),
     traits: [],
     desires: [],
-    skills: [],
-    // favorability: {
-    //   'Army': getInitialFavorability(faction, 'Army'),
-    //   'Workers': getInitialFavorability(faction, 'Workers'),
-    //   'Secret Police': getInitialFavorability(faction, 'Secret Police'),
-    //   'Clergy': getInitialFavorability(faction, 'Clergy'),
-    //   'Business': getInitialFavorability(faction, 'Business'),
-    //   'Parliament': getInitialFavorability(faction, 'Parliament'),
-    // },
-    loyalty: makeValue(randomIn(-100, 100))
+    skills: []
   };
 
-  switch (person.disposition) {
-    case 'zealot':
-      {
+  // effects of faction
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
 
-        break;
-      }
-    case 'realist':
-      {
+  try {
+    for (var _iterator = config.personResources[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var resource = _step.value;
 
-        break;
-      }
-    case 'moderate':
-      {
+      if (prototype[faction][resource] == null) continue;
+      // console.log(faction, resource, prototype[faction], prototype[faction][resource]);
+      person[resource] = makeValue(prototype[faction][resource]);
+    }
 
-        break;
+    // effects of title
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
       }
-    case 'idealist':
-      {
-
-        break;
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
       }
-    case 'radical':
-      {
-
-        break;
-      }
+    }
   }
 
   if (!title) person.title = oneOf(factionTitles[faction]);
-  switch (faction) {
-    case 'Army':
-      {
-        person.money = makeValue(isMiddleClass());
-        person.income = 5000;
-        if (Math.random() < 0.5) {
-          person.traits.push('Aggressive');
-        }
-        break;
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = config.personResources[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var _resource = _step2.value;
+
+      if (prototype[person.title][_resource] == null) continue;
+      person[_resource] = makeValue(prototype[person.title][_resource]);
+    }
+
+    // one-off for loyalty
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
       }
-    case 'Workers':
-      {
-        person.money = makeValue(isPoor());
-        if (Math.random() < 0.5) {
-          person.traits.push('Moderate');
-        }
-        break;
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
       }
-    case 'Secret Police':
-      {
-        person.money = makeValue(isRich());
-        person.income = 5000;
-        if (Math.random() < 0.5) {
-          person.traits.push('Cruel');
-        }
-        break;
-      }
-    case 'Clergy':
-      {
-        person.money = makeValue(isMiddleClass());
-        person.income = 5000;
-        if (Math.random() < 0.5) {
-          person.traits.push('Generous');
-        }
-        break;
-      }
-    case 'Business':
-      {
-        person.money = makeValue(isFilthyRich());
-        person.corruption.factors.push({
-          name: 'Tax Loop Holes',
-          value: 0.4
-        });
-        if (Math.random() < 0.8) {
-          person.traits.push('Greedy');
-        }
-        break;
-      }
-    case 'Parliament':
-      {
-        person.income = 5000;
-        person.money = makeValue(isRich());
-        break;
-      }
+    }
   }
-  if (Math.random() < 0.3) {
-    person.traits.push(oneOf(config.traits));
-  }
+
+  person.loyalty = makeValue(normalIn(prototype[faction].loyalty - 5, prototype[faction].loyalty + 5));
+
+  // effects of disposition
+  // TODO
+
+  // effects of traits
+  // if (Math.random() < 0.3) {
+  //   person.traits.push(oneOf(config.traits));
+  // }
 
   return person;
 };
 
-var isFilthyRich = function isFilthyRich() {
-  return normalIn(1000000, 10000000);
-};
-var isRich = function isRich() {
-  return normalIn(100000, 1000000);
-};
-var isMiddleClass = function isMiddleClass() {
-  return randomIn(50000, 200000);
-};
-var isPoor = function isPoor() {
-  return randomIn(1000, 30000);
-};
-var isDirtPoor = function isDirtPoor() {
-  return randomIn(0, 10000);
-};
-
 module.exports = {
-  makePerson: makePerson,
-  isFilthyRich: isFilthyRich,
-  isRich: isRich,
-  isMiddleClass: isMiddleClass,
-  isPoor: isPoor,
-  isDirtPoor: isDirtPoor
+  makePerson: makePerson
 };
 },{"../config":1,"../utils/factions":13,"../utils/simulatedValues":14,"../utils/stochastic":15}],4:[function(require,module,exports){
 'use strict';
@@ -446,7 +501,7 @@ var gameReducer = function gameReducer(game, action) {
               var person = _step.value;
 
               if (person.faction == 'Workers' || person.faction == 'Business') {
-                totalTaxes += person.income * (1 - person.corruption.value) * gov.factions[person.faction].taxRate.value;
+                totalTaxes += person.income * (1 - person.corruption.value / 100) * gov.factions[person.faction].taxRate.value;
               }
             }
           } catch (err) {
@@ -499,7 +554,7 @@ var computeGovFactors = function computeGovFactors(gov) {
       var person = _step2.value;
 
       if (person.faction == 'Workers' || person.faction == 'Business') {
-        totalTaxes += person.income * (1 - person.corruption.value) * gov.factions[person.faction].taxRate.value;
+        totalTaxes += person.income * (1 - person.corruption.value / 100) * gov.factions[person.faction].taxRate.value;
       }
     }
   } catch (err) {
@@ -532,7 +587,7 @@ var computeGovFactors = function computeGovFactors(gov) {
     for (var _iterator3 = gov.population[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
       var _person = _step3.value;
 
-      if (_person.faction != 'Workers' && _person.faction != 'Business') {
+      if (_person.faction != 'Workers' && _person.faction != 'Business' && _person.income != null) {
         totalSalaries += _person.income;
       }
     }
@@ -564,7 +619,7 @@ var computeGovFactors = function computeGovFactors(gov) {
     name: 'Army Tanks'
   });
   gov.coercion.factors.push({
-    value: gov.factions["Secret Police"].surveillance.value,
+    value: gov.factions["Secret Police"].censorship.value,
     name: 'Police Surveillance'
   });
 
@@ -706,7 +761,7 @@ var computeAllPersonFactors = function computeAllPersonFactors(gov) {
 
       if (person.faction == 'Workers' || person.faction == 'Business') {
         person.money.factors.push({
-          value: -1 * person.income * (1 - person.corruption.value) * gov.factions[person.faction].taxRate.value,
+          value: -1 * person.income * (1 - person.corruption.value / 100) * gov.factions[person.faction].taxRate.value,
           name: 'Taxes (after corruption)'
         });
       }
@@ -1392,7 +1447,7 @@ module.exports = {
 },{}],13:[function(require,module,exports){
 'use strict';
 
-var _titles, _leadershipTitles, _governmentTitles, _favorabilityMatrix;
+var _favorabilityMatrix;
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
@@ -1407,33 +1462,6 @@ var _require2 = require('../config'),
 
 var randomFaction = function randomFaction() {
   return oneOf(config.factions);
-};
-
-////////////////////////////////////////////////////////////
-// Titles
-////////////////////////////////////////////////////////////
-var titles = (_titles = {
-  Army: ['General', 'Colonel'],
-  Workers: ['Union Leader', 'Foreman']
-}, _defineProperty(_titles, "Secret Police", ['Captain', 'Agent']), _defineProperty(_titles, 'Clergy', ['Cardinal', 'Priest']), _defineProperty(_titles, 'Business', ['CEO', 'VP']), _defineProperty(_titles, 'Parliament', ['Minister', 'Representative']), _titles);
-var factionTitles = function factionTitles(faction) {
-  return titles[faction];
-};
-
-var leadershipTitles = (_leadershipTitles = {
-  Army: 'Generalissimo',
-  Workers: 'Comrade'
-}, _defineProperty(_leadershipTitles, "Secret Police", 'Director'), _defineProperty(_leadershipTitles, 'Clergy', 'Prophet'), _defineProperty(_leadershipTitles, 'Business', 'Chairman'), _defineProperty(_leadershipTitles, 'Parliament', 'President'), _leadershipTitles);
-var leadershipTitle = function leadershipTitle(faction) {
-  return leadershipTitles[faction];
-};
-
-var governmentTitles = (_governmentTitles = {
-  Army: 'Military Junta',
-  Workers: 'People\'s Dictatorship'
-}, _defineProperty(_governmentTitles, "Secret Police", 'Police State'), _defineProperty(_governmentTitles, 'Clergy', 'Theocracy'), _defineProperty(_governmentTitles, 'Business', 'Trade Syndicate'), _defineProperty(_governmentTitles, 'Parliament', 'Republic'), _governmentTitles);
-var governmentTitle = function governmentTitle(faction) {
-  return governmentTitles[faction];
 };
 
 ////////////////////////////////////////////////////////////
@@ -1453,9 +1481,6 @@ var getInitialFavorability = function getInitialFavorability(factionA, factionB)
 
 module.exports = {
   randomFaction: randomFaction,
-  factionTitles: factionTitles,
-  leadershipTitle: leadershipTitle,
-  governmentTitle: governmentTitle,
   getInitialFavorability: getInitialFavorability
 };
 },{"../config":1,"../utils/stochastic":15}],14:[function(require,module,exports){

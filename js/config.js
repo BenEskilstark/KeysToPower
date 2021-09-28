@@ -38,14 +38,14 @@ const config = {
   ],
   personResources: [
     'money', 'corruption', 'loyalty',
-    'income', 'taxRate', 'minimumWage', 'workHours', 'costs',
+    'costs',
   ],
 
   // money
   moneyThresholds: {
     ['Filthy Rich']: 1000000,
     Rich: 100000,
-    ["Middle Class": 10000,
+    ["Middle Class"]: 10000,
     Poor: 1000,
     ["Dirt Poor"]: 100,
   },
@@ -84,7 +84,7 @@ const prototype = {
     factories: 1,
 
     // finances
-    income: 10000,
+    income: 0, // computed later
     taxRate: 0.5,
     minimumWage: 1,
     workHours: 60,
@@ -140,6 +140,7 @@ const prototype = {
     tithe: 10,
 
     // finances
+    income: 0, // computed later
     costs: -1000,
   },
   Cardinal: {
@@ -161,7 +162,7 @@ const prototype = {
     numPeople: 7,
 
     // finances
-    income: 1,
+    income: 0, // computed later
     minimumWage: 1,
     taxRate: 0.5,
     workHours: 60,
@@ -231,4 +232,6 @@ const prototype = {
 
 };
 
+window.prototype = prototype;
+window.config = config;
 module.exports = {config, prototype};

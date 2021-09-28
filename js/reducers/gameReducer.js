@@ -30,7 +30,7 @@ const gameReducer = (game, action) => {
         let totalTaxes = 0;
         for (const person of gov.population) {
           if (person.faction == 'Workers' || person.faction == 'Business') {
-            totalTaxes += person.income * (1 - person.corruption.value) *
+            totalTaxes += person.income * (1 - person.corruption.value / 100) *
               gov.factions[person.faction].taxRate.value;
           }
         }
@@ -62,7 +62,7 @@ const computeGovFactors = (gov) => {
   let totalTaxes = 0;
   for (const person of gov.population) {
     if (person.faction == 'Workers' || person.faction == 'Business') {
-      totalTaxes += person.income * (1 - person.corruption.value) *
+      totalTaxes += person.income * (1 - person.corruption.value / 100) *
         gov.factions[person.faction].taxRate.value;
     }
   }
@@ -74,7 +74,11 @@ const computeGovFactors = (gov) => {
   }
   let totalSalaries = 0;
   for (const person of gov.population) {
-    if (person.faction != 'Workers' && person.faction != 'Business') {
+    if (
+      person.faction != 'Workers' &&
+      person.faction != 'Business' &&
+      person.income != null
+    ) {
       totalSalaries += person.income;
     }
   }
@@ -190,7 +194,7 @@ const computeAllPersonFactors = (gov) => {
 
     if (person.faction == 'Workers' || person.faction == 'Business') {
       person.money.factors.push({
-        value: -1 * person.income * (1 - person.corruption.value)
+        value: -1 * person.income * (1 - person.corruption.value / 100)
           * gov.factions[person.faction].taxRate.value,
         name: 'Taxes (after corruption)',
       });

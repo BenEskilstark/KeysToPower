@@ -1,8 +1,6 @@
 
 - - - - - - Simulation Issues - - - - - - -
   - disposition vs traits -- how should people vary?
-  - everyone's money just goes up except yours
-    - corruption for gov salaries?
   - resources
     - how does parliament create legitimacy -- what is its resource?
   - how to correlate petitions that you pass w/people's desires?
@@ -20,8 +18,10 @@
     - each resource adds 1 to overall loyalty (loyalty of each person)
 
   - Simulation
-    - resources for government
-      - money
+    - money
+      - compute taxes in one place
+      - compute worker wages based on hours
+      - compute clergy income based on tithe
   - switch loyalty to favorability
 
   - UI

@@ -22,7 +22,7 @@ import type {
 
 const makeRandomGovernment = () => {
   const faction = randomFaction();
-  const leader = makePerson(faction, config.leadershipTitles[faction]);
+  // const leader = makePerson(faction, config.leadershipTitles[faction]);
 
   const factions = {
     Army: makeFaction('Army', faction),
@@ -34,7 +34,7 @@ const makeRandomGovernment = () => {
   };
 
   const gov = {
-    leader,
+    // leader,
     type: config.governmentTitles[faction],
     factions,
     population: [
@@ -50,7 +50,7 @@ const makeRandomGovernment = () => {
     turn: 0,
 
     coercion: makeValue(0),
-    money: makeValue(isFilthyRich()),
+    money: makeValue(config.moneyThresholds['Filthy Rich']),
     production: makeValue(0),
     legitimacy: makeValue(0),
     land: makeValue(100, 'Total National Land'),
@@ -84,38 +84,34 @@ const makeRandomGovernment = () => {
   return gov;
 };
 
-const makeFaction = (name: FactionName, governmentFaction: FactionName): Faction => {
-  const isGovernmentFaction = name == governmentFaction;
+const makeFaction = (factionName: FactionName, governmentFaction: FactionName): Faction => {
+  const isGovernmentFaction = factionName == governmentFaction;
 
   const faction = {
-    name,
+    name: factionName,
     people: [],
-    land: 0,
   };
-  const titles = config.factionTitles[name];
+  const titles = config.titles[factionName];
 
-  // set faction resources
-
-  // set faction finances
+  // set faction resources/finances
+  for (const resource of config.factionResources) {
+    if (prototype[factionName][resource] == null) continue;
+    faction[resource] = makeValue(prototype[factionName][resource]);
+  }
 
   // set faction people
-  const leader = makePerson(name, titles[0]);
+  const leader = makePerson(factionName, titles[0]);
   leader.isLeader = true;
   leader.income *= 2;
   faction.people.push(leader);
 
-  for (let i = 0; i < prototype[faction].numPeople - 1; i++) {
-    faction.people.push(makePerson(name, titles[1]));
+  for (let i = 0; i < prototype[factionName].numPeople - 1; i++) {
+    faction.people.push(makePerson(factionName, titles[1]));
   }
 
   // set faction information
+  // TODO
 
-
-  // turn everything into values
-  for (const resource of config.factionResources) {
-    if (faction[resource] == null) continue;
-    faction[resource] = makeValue(faction[resource]);
-  }
   return faction;
 };
 

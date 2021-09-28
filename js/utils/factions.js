@@ -28,8 +28,5 @@ const getInitialFavorability = (factionA, factionB) => {
 
 module.exports = {
   randomFaction,
-  factionTitles,
-  leadershipTitle,
-  governmentTitle,
   getInitialFavorability,
 };
