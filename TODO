@@ -1,32 +1,41 @@
 
 - - - - - - Simulation Issues - - - - - - -
+  - petitions
+    - How are they generated?
+    - how to correlate petitions that you pass w/people's desires?
+  - balance of collapse vs time to affect things
   - disposition vs traits -- how should people vary?
   - resources
     - how does parliament create legitimacy -- what is its resource?
-  - how to correlate petitions that you pass w/people's desires?
   - how do people spend money?
 
 
 - - - - - - - - TODO - - - - - - -
-  - move all magic numbers into the config
-  - compute all faction/person properties ECS-style
-  - compute loyalty for each person
-    - what does each faction (per person) do when loyalty gets low
-    - faction leaders expect to move up in threshold
+  - streamline how values are computed in gameReducer
+  - faction InfoCard should be split into resources, finances, aggregate info
   - PetitionDialog
-  - faction-level resources
-    - each resource adds 1 to overall loyalty (loyalty of each person)
+    - print outcomes
+    - accept button
+    - use legitimacy to reject
+    - pass coercion threshold to reject (w/loyalty penalty -- for who?)
+    - apply outcomes
+    - cross-reference outcomes with desires
+      - add desires to some people
+      - update their loyalty
 
   - Simulation
     - money
       - compute taxes in one place
       - compute worker wages based on hours
       - compute clergy income based on tithe
-  - switch loyalty to favorability
+    - loyalty
+      - each resource adds 1 to overall loyalty (loyalty of each person)
+      - what does each faction (per person) do when loyalty gets low
+      - faction leaders expect to move up in threshold
+      - switch loyalty to favorability
 
   - UI
     - display rates as %'s
-    - faction InfoCard should be split into resources, finances, aggregate info
   - Petitions
     - making your own petitions
   - Skills

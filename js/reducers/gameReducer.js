@@ -3,7 +3,7 @@
 const {
   sumFactors, updateSimulatedValue,
 } = require('../utils/simulatedValues');
-const {config} = require('../config');
+const {config, prototype} = require('../config');
 
 const gameReducer = (game, action) => {
   switch (action.type) {
@@ -50,11 +50,9 @@ const gameReducer = (game, action) => {
 ////////////////////////////////////////////////////////////
 
 const computeGovValues = (gov) => {
-  updateSimulatedValue(gov.money);
-  updateSimulatedValue(gov.coercion);
-  updateSimulatedValue(gov.production);
-  updateSimulatedValue(gov.land);
-  updateSimulatedValue(gov.legitimacy);
+  for (const resource of config.governmentResources) {
+    updateSimulatedValue(gov[resource]);
+  }
 };
 
 const computeGovFactors = (gov) => {
@@ -131,14 +129,13 @@ const computeAllFactionValues = (gov) => {
     const faction = gov.factions[f];
     for (const resource of config.factionResources) {
       if (faction[resource] == null) continue;
-      faction[resource].value += sumFactors(faction[resource].factors);
-      faction[resource].factors = [];
+      updateSimulatedValue(faction[resource]);
     }
   }
 };
 
 const computeAllFactionFactors = (gov) => {
-
+  // rederive informational values
 };
 
 ////////////////////////////////////////////////////////////
@@ -147,9 +144,9 @@ const computeAllFactionFactors = (gov) => {
 
 const computeAllPersonValues = (gov) => {
   for (const person of gov.population) {
-    updateSimulatedValue(person.money);
-    updateSimulatedValue(person.corruption);
-    updateSimulatedValue(person.loyalty);
+    for (const resource of config.personResources) {
+      updateSimulatedValue(person[resource]);
+    }
   }
 };
 
