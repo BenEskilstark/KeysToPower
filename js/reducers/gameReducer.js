@@ -11,10 +11,6 @@ const gameReducer = (game, action) => {
       const gov = game.government;
       gov.turn += 1;
 
-      // compute government-level resources
-      computeGovValues(gov);
-      computeGovFactors(gov);
-
       // compute faction-level resources
       computeAllFactionValues(gov);
       computeAllFactionFactors(gov);
@@ -23,20 +19,13 @@ const gameReducer = (game, action) => {
       computeAllPersonValues(gov);
       computeAllPersonFactors(gov);
 
+      // compute government-level resources
+      computeGovValues(gov);
+      computeGovFactors(gov);
+
       // HACK: prepare coercion and taxes
       if (gov.turn == 1) {
         updateSimulatedValue(gov.coercion);
-
-        let totalTaxes = 0;
-        for (const person of gov.population) {
-          if (person.faction == 'Workers' || person.faction == 'Business') {
-            totalTaxes += computeTaxLoad(gov, person);
-          }
-        }
-        gov.money.factors.push({
-          value: totalTaxes,
-          name: 'Tax Revenue',
-        });
       }
       return game;
     }
@@ -59,7 +48,6 @@ const gameReducer = (game, action) => {
       for (const outcome of petition.outcomes) {
         applyOutcome(game.government, outcome);
       }
-      console.trace(game.goverment);
       if (fromQueue) {
         game.government.petitionQueue.shift();
       }
@@ -191,17 +179,18 @@ const computeAllPersonFactors = (gov) => {
         value: person.income,
         name: 'Income',
       });
-      continue;
     }
 
     let income = 0;
     if (person.faction == 'Workers') {
-      income = gov.factions.Workers.minimumWage.value;
+      const workHours = gov.factions.Workers.workHours.value;
+      income = gov.factions.Workers.minimumWage.value * workHours;
       person.money.factors.push({
         value: income,
-        name: 'Income',
+        name: 'Income (wage x hours)',
       });
     }
+
     if (person.faction == 'Business') {
       const grossRevenue = gov.factions.Business.factories.value * 10000;
       person.money.factors.push({
@@ -217,11 +206,19 @@ const computeAllPersonFactors = (gov) => {
       });
       income = grossRevenue - wages;
     }
-    // need to track the income on the person for easier tax calculation
-    // at the gov level
-    person.income = income;
+
+    if (prototype[person.faction].costs != null) {
+      person.money.factors.push({
+        value: prototype[person.faction].costs,
+        name: 'Personal Costs',
+      });
+    }
 
     if (person.faction == 'Workers' || person.faction == 'Business') {
+      // need to track the income on the person for easier tax calculation
+      // at the gov level
+      person.income = income;
+
       person.money.factors.push({
         value: -1 * computeTaxLoad(gov, person),
         name: 'Taxes (after corruption)',

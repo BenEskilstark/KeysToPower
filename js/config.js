@@ -166,7 +166,7 @@ const prototype = {
     minimumWage: 1,
     taxRate: 0.5,
     workHours: 60,
-    costs: -1,
+    costs: -31,
 
     // resources
     land: 1,

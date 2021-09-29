@@ -7,13 +7,18 @@
   - disposition vs traits -- how should people vary?
   - resources
     - how does parliament create legitimacy -- what is its resource?
-  - how do people spend money?
 
 
 - - - - - - - - TODO - - - - - - -
-  - off-by-one turn for lowering taxes
-  - PetitionDialog
-    - print outcomes
+  - loyalty
+    - each resource adds 1 to overall loyalty (loyalty of each person)
+    - what does each faction (per person) do when loyalty gets low
+    - faction leaders expect to move up in threshold
+    - switch loyalty to favorability
+
+  - Petitions
+    - display outcomes
+    - button for hiding the petition
     - cross-reference outcomes with desires
       - add desires to some people
       - update their loyalty
@@ -21,19 +26,10 @@
 
   - Simulation
     - money
-      - compute taxes in one place
-      - compute worker wages based on hours
       - compute clergy income based on tithe
-    - loyalty
-      - each resource adds 1 to overall loyalty (loyalty of each person)
-      - what does each faction (per person) do when loyalty gets low
-      - faction leaders expect to move up in threshold
-      - switch loyalty to favorability
 
   - UI
     - display rates as %'s
-  - Petitions
-    - making your own petitions
   - Skills
 
 

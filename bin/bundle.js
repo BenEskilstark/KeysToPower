@@ -128,7 +128,7 @@ var prototype = (_prototype = {
     minimumWage: 1,
     taxRate: 0.5,
     workHours: 60,
-    costs: -1,
+    costs: -31,
 
     // resources
     land: 1
@@ -223,7 +223,7 @@ var makeRandomGovernment = function makeRandomGovernment() {
 
     petitionQueue: [{
       name: 'Lower Business Taxes',
-      description: 'Lower Taxes from 50% to 25%',
+      description: 'Lower Taxes by 25 % points',
       owner: null,
       outcomes: [{
         name: 'Lower Business Taxes',
@@ -234,7 +234,7 @@ var makeRandomGovernment = function makeRandomGovernment() {
       rejection: {
         legitimacyCost: 20,
         rejectionOutcomes: [{
-          name: 'Spend Legitimacy to avoid lowering taxes',
+          name: 'Spend 20 Legitimacy to avoid lowering taxes',
           path: ['legitimacy', 'factors'],
           value: { name: 'Don\'t Lower Business Taxes', value: -20 },
           operation: 'append'
@@ -499,10 +499,6 @@ var gameReducer = function gameReducer(game, action) {
         var gov = game.government;
         gov.turn += 1;
 
-        // compute government-level resources
-        computeGovValues(gov);
-        computeGovFactors(gov);
-
         // compute faction-level resources
         computeAllFactionValues(gov);
         computeAllFactionFactors(gov);
@@ -511,42 +507,13 @@ var gameReducer = function gameReducer(game, action) {
         computeAllPersonValues(gov);
         computeAllPersonFactors(gov);
 
+        // compute government-level resources
+        computeGovValues(gov);
+        computeGovFactors(gov);
+
         // HACK: prepare coercion and taxes
         if (gov.turn == 1) {
           updateSimulatedValue(gov.coercion);
-
-          var totalTaxes = 0;
-          var _iteratorNormalCompletion = true;
-          var _didIteratorError = false;
-          var _iteratorError = undefined;
-
-          try {
-            for (var _iterator = gov.population[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-              var person = _step.value;
-
-              if (person.faction == 'Workers' || person.faction == 'Business') {
-                totalTaxes += computeTaxLoad(gov, person);
-              }
-            }
-          } catch (err) {
-            _didIteratorError = true;
-            _iteratorError = err;
-          } finally {
-            try {
-              if (!_iteratorNormalCompletion && _iterator.return) {
-                _iterator.return();
-              }
-            } finally {
-              if (_didIteratorError) {
-                throw _iteratorError;
-              }
-            }
-          }
-
-          gov.money.factors.push({
-            value: totalTaxes,
-            name: 'Tax Revenue'
-          });
         }
         return game;
       }
@@ -560,15 +527,49 @@ var gameReducer = function gameReducer(game, action) {
         if (withCoercion) {
           outcomes = petition.rejection.coercionOutcomes;
         }
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
+
+        try {
+          for (var _iterator = outcomes[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var outcome = _step.value;
+
+            applyOutcome(game.government, outcome);
+          }
+        } catch (err) {
+          _didIteratorError = true;
+          _iteratorError = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion && _iterator.return) {
+              _iterator.return();
+            }
+          } finally {
+            if (_didIteratorError) {
+              throw _iteratorError;
+            }
+          }
+        }
+
+        if (fromQueue) {
+          game.government.petitionQueue.shift();
+        }
+        return game;
+      }
+    case 'ACCEPT_PETITION':
+      {
+        var _petition = action.petition,
+            _fromQueue = action.fromQueue;
         var _iteratorNormalCompletion2 = true;
         var _didIteratorError2 = false;
         var _iteratorError2 = undefined;
 
         try {
-          for (var _iterator2 = outcomes[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-            var outcome = _step2.value;
+          for (var _iterator2 = _petition.outcomes[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+            var _outcome = _step2.value;
 
-            applyOutcome(game.government, outcome);
+            applyOutcome(game.government, _outcome);
           }
         } catch (err) {
           _didIteratorError2 = true;
@@ -585,41 +586,6 @@ var gameReducer = function gameReducer(game, action) {
           }
         }
 
-        if (fromQueue) {
-          game.government.petitionQueue.shift();
-        }
-        return game;
-      }
-    case 'ACCEPT_PETITION':
-      {
-        var _petition = action.petition,
-            _fromQueue = action.fromQueue;
-        var _iteratorNormalCompletion3 = true;
-        var _didIteratorError3 = false;
-        var _iteratorError3 = undefined;
-
-        try {
-          for (var _iterator3 = _petition.outcomes[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-            var _outcome = _step3.value;
-
-            applyOutcome(game.government, _outcome);
-          }
-        } catch (err) {
-          _didIteratorError3 = true;
-          _iteratorError3 = err;
-        } finally {
-          try {
-            if (!_iteratorNormalCompletion3 && _iterator3.return) {
-              _iterator3.return();
-            }
-          } finally {
-            if (_didIteratorError3) {
-              throw _iteratorError3;
-            }
-          }
-        }
-
-        console.trace(game.goverment);
         if (_fromQueue) {
           game.government.petitionQueue.shift();
         }
@@ -634,15 +600,46 @@ var gameReducer = function gameReducer(game, action) {
 ////////////////////////////////////////////////////////////
 
 var computeGovValues = function computeGovValues(gov) {
+  var _iteratorNormalCompletion3 = true;
+  var _didIteratorError3 = false;
+  var _iteratorError3 = undefined;
+
+  try {
+    for (var _iterator3 = config.governmentResources[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+      var resource = _step3.value;
+
+      updateSimulatedValue(gov[resource]);
+    }
+  } catch (err) {
+    _didIteratorError3 = true;
+    _iteratorError3 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion3 && _iterator3.return) {
+        _iterator3.return();
+      }
+    } finally {
+      if (_didIteratorError3) {
+        throw _iteratorError3;
+      }
+    }
+  }
+};
+
+var computeGovFactors = function computeGovFactors(gov) {
+  // money
+  var totalTaxes = 0;
   var _iteratorNormalCompletion4 = true;
   var _didIteratorError4 = false;
   var _iteratorError4 = undefined;
 
   try {
-    for (var _iterator4 = config.governmentResources[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-      var resource = _step4.value;
+    for (var _iterator4 = gov.population[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+      var person = _step4.value;
 
-      updateSimulatedValue(gov[resource]);
+      if (person.faction == 'Workers' || person.faction == 'Business') {
+        totalTaxes += computeTaxLoad(gov, person);
+      }
     }
   } catch (err) {
     _didIteratorError4 = true;
@@ -658,21 +655,24 @@ var computeGovValues = function computeGovValues(gov) {
       }
     }
   }
-};
 
-var computeGovFactors = function computeGovFactors(gov) {
-  // money
-  var totalTaxes = 0;
+  if (totalTaxes > 0) {
+    gov.money.factors.push({
+      value: totalTaxes,
+      name: 'Tax Revenue'
+    });
+  }
+  var totalSalaries = 0;
   var _iteratorNormalCompletion5 = true;
   var _didIteratorError5 = false;
   var _iteratorError5 = undefined;
 
   try {
     for (var _iterator5 = gov.population[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-      var person = _step5.value;
+      var _person = _step5.value;
 
-      if (person.faction == 'Workers' || person.faction == 'Business') {
-        totalTaxes += computeTaxLoad(gov, person);
+      if (_person.faction != 'Workers' && _person.faction != 'Business' && _person.income != null) {
+        totalSalaries += _person.income;
       }
     }
   } catch (err) {
@@ -686,40 +686,6 @@ var computeGovFactors = function computeGovFactors(gov) {
     } finally {
       if (_didIteratorError5) {
         throw _iteratorError5;
-      }
-    }
-  }
-
-  if (totalTaxes > 0) {
-    gov.money.factors.push({
-      value: totalTaxes,
-      name: 'Tax Revenue'
-    });
-  }
-  var totalSalaries = 0;
-  var _iteratorNormalCompletion6 = true;
-  var _didIteratorError6 = false;
-  var _iteratorError6 = undefined;
-
-  try {
-    for (var _iterator6 = gov.population[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-      var _person = _step6.value;
-
-      if (_person.faction != 'Workers' && _person.faction != 'Business' && _person.income != null) {
-        totalSalaries += _person.income;
-      }
-    }
-  } catch (err) {
-    _didIteratorError6 = true;
-    _iteratorError6 = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion6 && _iterator6.return) {
-        _iterator6.return();
-      }
-    } finally {
-      if (_didIteratorError6) {
-        throw _iteratorError6;
       }
     }
   }
@@ -769,16 +735,49 @@ var computeGovFactors = function computeGovFactors(gov) {
 var computeAllFactionValues = function computeAllFactionValues(gov) {
   for (var f in gov.factions) {
     var faction = gov.factions[f];
+    var _iteratorNormalCompletion6 = true;
+    var _didIteratorError6 = false;
+    var _iteratorError6 = undefined;
+
+    try {
+      for (var _iterator6 = config.factionResources[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+        var resource = _step6.value;
+
+        if (faction[resource] == null) continue;
+        updateSimulatedValue(faction[resource]);
+      }
+    } catch (err) {
+      _didIteratorError6 = true;
+      _iteratorError6 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion6 && _iterator6.return) {
+          _iterator6.return();
+        }
+      } finally {
+        if (_didIteratorError6) {
+          throw _iteratorError6;
+        }
+      }
+    }
+  }
+};
+
+var computeAllFactionFactors = function computeAllFactionFactors(gov) {
+  // rederive informational values
+  for (var f in gov.factions) {
+    var faction = gov.factions[f];
+    // loyalty
+    var sum = 0;
     var _iteratorNormalCompletion7 = true;
     var _didIteratorError7 = false;
     var _iteratorError7 = undefined;
 
     try {
-      for (var _iterator7 = config.factionResources[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-        var resource = _step7.value;
+      for (var _iterator7 = faction.people[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+        var person = _step7.value;
 
-        if (faction[resource] == null) continue;
-        updateSimulatedValue(faction[resource]);
+        sum += person.loyalty.value;
       }
     } catch (err) {
       _didIteratorError7 = true;
@@ -794,39 +793,6 @@ var computeAllFactionValues = function computeAllFactionValues(gov) {
         }
       }
     }
-  }
-};
-
-var computeAllFactionFactors = function computeAllFactionFactors(gov) {
-  // rederive informational values
-  for (var f in gov.factions) {
-    var faction = gov.factions[f];
-    // loyalty
-    var sum = 0;
-    var _iteratorNormalCompletion8 = true;
-    var _didIteratorError8 = false;
-    var _iteratorError8 = undefined;
-
-    try {
-      for (var _iterator8 = faction.people[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
-        var person = _step8.value;
-
-        sum += person.loyalty.value;
-      }
-    } catch (err) {
-      _didIteratorError8 = true;
-      _iteratorError8 = err;
-    } finally {
-      try {
-        if (!_iteratorNormalCompletion8 && _iterator8.return) {
-          _iterator8.return();
-        }
-      } finally {
-        if (_didIteratorError8) {
-          throw _iteratorError8;
-        }
-      }
-    }
 
     faction.loyalty = sum / faction.people.length;
   }
@@ -837,49 +803,49 @@ var computeAllFactionFactors = function computeAllFactionFactors(gov) {
 ////////////////////////////////////////////////////////////
 
 var computeAllPersonValues = function computeAllPersonValues(gov) {
-  var _iteratorNormalCompletion9 = true;
-  var _didIteratorError9 = false;
-  var _iteratorError9 = undefined;
+  var _iteratorNormalCompletion8 = true;
+  var _didIteratorError8 = false;
+  var _iteratorError8 = undefined;
 
   try {
-    for (var _iterator9 = gov.population[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
-      var person = _step9.value;
-      var _iteratorNormalCompletion10 = true;
-      var _didIteratorError10 = false;
-      var _iteratorError10 = undefined;
+    for (var _iterator8 = gov.population[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+      var person = _step8.value;
+      var _iteratorNormalCompletion9 = true;
+      var _didIteratorError9 = false;
+      var _iteratorError9 = undefined;
 
       try {
-        for (var _iterator10 = config.personResources[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
-          var resource = _step10.value;
+        for (var _iterator9 = config.personResources[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+          var resource = _step9.value;
 
           updateSimulatedValue(person[resource]);
         }
       } catch (err) {
-        _didIteratorError10 = true;
-        _iteratorError10 = err;
+        _didIteratorError9 = true;
+        _iteratorError9 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion10 && _iterator10.return) {
-            _iterator10.return();
+          if (!_iteratorNormalCompletion9 && _iterator9.return) {
+            _iterator9.return();
           }
         } finally {
-          if (_didIteratorError10) {
-            throw _iteratorError10;
+          if (_didIteratorError9) {
+            throw _iteratorError9;
           }
         }
       }
     }
   } catch (err) {
-    _didIteratorError9 = true;
-    _iteratorError9 = err;
+    _didIteratorError8 = true;
+    _iteratorError8 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion9 && _iterator9.return) {
-        _iterator9.return();
+      if (!_iteratorNormalCompletion8 && _iterator8.return) {
+        _iterator8.return();
       }
     } finally {
-      if (_didIteratorError9) {
-        throw _iteratorError9;
+      if (_didIteratorError8) {
+        throw _iteratorError8;
       }
     }
   }
@@ -888,30 +854,31 @@ var computeAllPersonValues = function computeAllPersonValues(gov) {
 var computeAllPersonFactors = function computeAllPersonFactors(gov) {
 
   // money
-  var _iteratorNormalCompletion11 = true;
-  var _didIteratorError11 = false;
-  var _iteratorError11 = undefined;
+  var _iteratorNormalCompletion10 = true;
+  var _didIteratorError10 = false;
+  var _iteratorError10 = undefined;
 
   try {
-    for (var _iterator11 = gov.population[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
-      var person = _step11.value;
+    for (var _iterator10 = gov.population[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
+      var person = _step10.value;
 
       if (person.faction != 'Workers' && person.faction != 'Business') {
         person.money.factors.push({
           value: person.income,
           name: 'Income'
         });
-        continue;
       }
 
       var income = 0;
       if (person.faction == 'Workers') {
-        income = gov.factions.Workers.minimumWage.value;
+        var workHours = gov.factions.Workers.workHours.value;
+        income = gov.factions.Workers.minimumWage.value * workHours;
         person.money.factors.push({
           value: income,
-          name: 'Income'
+          name: 'Income (wage x hours)'
         });
       }
+
       if (person.faction == 'Business') {
         var grossRevenue = gov.factions.Business.factories.value * 10000;
         person.money.factors.push({
@@ -925,11 +892,19 @@ var computeAllPersonFactors = function computeAllPersonFactors(gov) {
         });
         income = grossRevenue - wages;
       }
-      // need to track the income on the person for easier tax calculation
-      // at the gov level
-      person.income = income;
+
+      if (prototype[person.faction].costs != null) {
+        person.money.factors.push({
+          value: prototype[person.faction].costs,
+          name: 'Personal Costs'
+        });
+      }
 
       if (person.faction == 'Workers' || person.faction == 'Business') {
+        // need to track the income on the person for easier tax calculation
+        // at the gov level
+        person.income = income;
+
         person.money.factors.push({
           value: -1 * computeTaxLoad(gov, person),
           name: 'Taxes (after corruption)'
@@ -939,16 +914,16 @@ var computeAllPersonFactors = function computeAllPersonFactors(gov) {
 
     // loyalty
   } catch (err) {
-    _didIteratorError11 = true;
-    _iteratorError11 = err;
+    _didIteratorError10 = true;
+    _iteratorError10 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion11 && _iterator11.return) {
-        _iterator11.return();
+      if (!_iteratorNormalCompletion10 && _iterator10.return) {
+        _iterator10.return();
       }
     } finally {
-      if (_didIteratorError11) {
-        throw _iteratorError11;
+      if (_didIteratorError10) {
+        throw _iteratorError10;
       }
     }
   }
