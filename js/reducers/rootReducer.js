@@ -30,6 +30,8 @@ const rootReducer = (state: State, action: Action): State => {
     case 'SET_MODAL':
     case 'DISMISS_MODAL':
       return modalReducer(state, action);
+    case 'REJECT_PETITION':
+    case 'ACCEPT_PETITION':
     case 'TICK': {
       if (!state.game) return state;
       return {
@@ -38,6 +40,7 @@ const rootReducer = (state: State, action: Action): State => {
       };
     }
   }
+  return nextState;
 };
 
 

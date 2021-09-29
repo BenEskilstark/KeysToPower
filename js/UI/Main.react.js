@@ -26,7 +26,7 @@ function Main(props: Props): React.Node {
   return (
     <React.Fragment>
       {content}
-      {state.modal}
+      {modal}
     </React.Fragment>
   )
 }

@@ -79,8 +79,15 @@ export type Outcome = {
 };
 export type Petition = {
   name: string,
+  description: string,
   owner: Person,
   outcomes: Array<Outcome>,
+  rejection: {
+    legitimacyCost: number,
+    rejectionOutcomes: Array<Outcome>,
+    coercionThreshold: number,
+    coercionOutcomes: Array<Outcome>,
+  }
 }
 export type Skill = string;
 

@@ -213,7 +213,7 @@ var makeRandomGovernment = function makeRandomGovernment() {
 
   var factions = (_factions = {
     Army: makeFaction('Army', faction)
-  }, _defineProperty(_factions, "Secret Police", makeFaction('Secret Police', faction)), _defineProperty(_factions, 'Business', makeFaction('Business', faction)), _defineProperty(_factions, 'Clergy', makeFaction('Clergy', faction)), _defineProperty(_factions, 'Parliament', makeFaction('Parliament', faction)), _defineProperty(_factions, 'Workers', makeFaction('Workers', faction)), _factions);
+  }, _defineProperty(_factions, "Secret Police", makeFaction('Secret Police', faction)), _defineProperty(_factions, 'Business', makeFaction('Business', faction)), _defineProperty(_factions, 'Workers', makeFaction('Workers', faction)), _defineProperty(_factions, 'Clergy', makeFaction('Clergy', faction)), _defineProperty(_factions, 'Parliament', makeFaction('Parliament', faction)), _factions);
 
   var gov = {
     // leader,
@@ -221,7 +221,30 @@ var makeRandomGovernment = function makeRandomGovernment() {
     factions: factions,
     population: [].concat(_toConsumableArray(factions["Army"].people), _toConsumableArray(factions["Workers"].people), _toConsumableArray(factions["Secret Police"].people), _toConsumableArray(factions["Clergy"].people), _toConsumableArray(factions["Business"].people), _toConsumableArray(factions["Parliament"].people)),
 
-    petitionQueue: [],
+    petitionQueue: [{
+      name: 'Lower Business Taxes',
+      description: 'Lower Taxes from 50% to 25%',
+      owner: null,
+      outcomes: [{
+        name: 'Lower Business Taxes',
+        path: ['factions', 'Business', 'taxRate', 'factors'],
+        value: { name: 'Lower Business Taxes', value: -0.25 },
+        operation: 'append'
+      }],
+      rejection: {
+        legitimacyCost: 20,
+        rejectionOutcomes: [{
+          name: 'Spend Legitimacy to avoid lowering taxes',
+          path: ['legitimacy', 'factors'],
+          value: { name: 'Don\'t Lower Business Taxes', value: -20 },
+          operation: 'append'
+        }],
+        coercionThreshold: 10,
+        coercionOutcomes: [
+          // TODO
+        ]
+      }
+    }],
     turn: 0,
 
     coercion: makeValue(0),
@@ -315,7 +338,7 @@ var makeFaction = function makeFaction(factionName, governmentFaction) {
 module.exports = {
   makeRandomGovernment: makeRandomGovernment
 };
-},{"../config":1,"../entities/person":3,"../utils/factions":13,"../utils/simulatedValues":14,"../utils/stochastic":15}],3:[function(require,module,exports){
+},{"../config":1,"../entities/person":3,"../utils/factions":15,"../utils/simulatedValues":17,"../utils/stochastic":18}],3:[function(require,module,exports){
 'use strict';
 
 var _require = require('../config'),
@@ -429,7 +452,7 @@ var makePerson = function makePerson(faction, title) {
 module.exports = {
   makePerson: makePerson
 };
-},{"../config":1,"../utils/factions":13,"../utils/simulatedValues":14,"../utils/stochastic":15}],4:[function(require,module,exports){
+},{"../config":1,"../utils/factions":15,"../utils/simulatedValues":17,"../utils/stochastic":18}],4:[function(require,module,exports){
 'use strict';
 
 var _require = require('redux'),
@@ -458,7 +481,7 @@ function renderUI(store) {
     modal: state.modal
   }), document.getElementById('container'));
 }
-},{"./reducers/rootReducer":7,"./ui/Main.react":11,"react":24,"react-dom":21,"redux":25}],5:[function(require,module,exports){
+},{"./reducers/rootReducer":7,"./ui/Main.react":12,"react":28,"react-dom":25,"redux":29}],5:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/simulatedValues'),
@@ -466,7 +489,8 @@ var _require = require('../utils/simulatedValues'),
     updateSimulatedValue = _require.updateSimulatedValue;
 
 var _require2 = require('../config'),
-    config = _require2.config;
+    config = _require2.config,
+    prototype = _require2.prototype;
 
 var gameReducer = function gameReducer(game, action) {
   switch (action.type) {
@@ -501,7 +525,7 @@ var gameReducer = function gameReducer(game, action) {
               var person = _step.value;
 
               if (person.faction == 'Workers' || person.faction == 'Business') {
-                totalTaxes += person.income * (1 - person.corruption.value / 100) * gov.factions[person.faction].taxRate.value;
+                totalTaxes += computeTaxLoad(gov, person);
               }
             }
           } catch (err) {
@@ -526,6 +550,81 @@ var gameReducer = function gameReducer(game, action) {
         }
         return game;
       }
+    case 'REJECT_PETITION':
+      {
+        var petition = action.petition,
+            withCoercion = action.withCoercion,
+            fromQueue = action.fromQueue;
+
+        var outcomes = petition.rejection.rejectionOutcomes;
+        if (withCoercion) {
+          outcomes = petition.rejection.coercionOutcomes;
+        }
+        var _iteratorNormalCompletion2 = true;
+        var _didIteratorError2 = false;
+        var _iteratorError2 = undefined;
+
+        try {
+          for (var _iterator2 = outcomes[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+            var outcome = _step2.value;
+
+            applyOutcome(game.government, outcome);
+          }
+        } catch (err) {
+          _didIteratorError2 = true;
+          _iteratorError2 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion2 && _iterator2.return) {
+              _iterator2.return();
+            }
+          } finally {
+            if (_didIteratorError2) {
+              throw _iteratorError2;
+            }
+          }
+        }
+
+        if (fromQueue) {
+          game.government.petitionQueue.shift();
+        }
+        return game;
+      }
+    case 'ACCEPT_PETITION':
+      {
+        var _petition = action.petition,
+            _fromQueue = action.fromQueue;
+        var _iteratorNormalCompletion3 = true;
+        var _didIteratorError3 = false;
+        var _iteratorError3 = undefined;
+
+        try {
+          for (var _iterator3 = _petition.outcomes[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+            var _outcome = _step3.value;
+
+            applyOutcome(game.government, _outcome);
+          }
+        } catch (err) {
+          _didIteratorError3 = true;
+          _iteratorError3 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion3 && _iterator3.return) {
+              _iterator3.return();
+            }
+          } finally {
+            if (_didIteratorError3) {
+              throw _iteratorError3;
+            }
+          }
+        }
+
+        console.trace(game.goverment);
+        if (_fromQueue) {
+          game.government.petitionQueue.shift();
+        }
+        return game;
+      }
   }
   return game;
 };
@@ -535,39 +634,58 @@ var gameReducer = function gameReducer(game, action) {
 ////////////////////////////////////////////////////////////
 
 var computeGovValues = function computeGovValues(gov) {
-  updateSimulatedValue(gov.money);
-  updateSimulatedValue(gov.coercion);
-  updateSimulatedValue(gov.production);
-  updateSimulatedValue(gov.land);
-  updateSimulatedValue(gov.legitimacy);
+  var _iteratorNormalCompletion4 = true;
+  var _didIteratorError4 = false;
+  var _iteratorError4 = undefined;
+
+  try {
+    for (var _iterator4 = config.governmentResources[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+      var resource = _step4.value;
+
+      updateSimulatedValue(gov[resource]);
+    }
+  } catch (err) {
+    _didIteratorError4 = true;
+    _iteratorError4 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion4 && _iterator4.return) {
+        _iterator4.return();
+      }
+    } finally {
+      if (_didIteratorError4) {
+        throw _iteratorError4;
+      }
+    }
+  }
 };
 
 var computeGovFactors = function computeGovFactors(gov) {
   // money
   var totalTaxes = 0;
-  var _iteratorNormalCompletion2 = true;
-  var _didIteratorError2 = false;
-  var _iteratorError2 = undefined;
+  var _iteratorNormalCompletion5 = true;
+  var _didIteratorError5 = false;
+  var _iteratorError5 = undefined;
 
   try {
-    for (var _iterator2 = gov.population[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-      var person = _step2.value;
+    for (var _iterator5 = gov.population[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+      var person = _step5.value;
 
       if (person.faction == 'Workers' || person.faction == 'Business') {
-        totalTaxes += person.income * (1 - person.corruption.value / 100) * gov.factions[person.faction].taxRate.value;
+        totalTaxes += computeTaxLoad(gov, person);
       }
     }
   } catch (err) {
-    _didIteratorError2 = true;
-    _iteratorError2 = err;
+    _didIteratorError5 = true;
+    _iteratorError5 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion2 && _iterator2.return) {
-        _iterator2.return();
+      if (!_iteratorNormalCompletion5 && _iterator5.return) {
+        _iterator5.return();
       }
     } finally {
-      if (_didIteratorError2) {
-        throw _iteratorError2;
+      if (_didIteratorError5) {
+        throw _iteratorError5;
       }
     }
   }
@@ -579,29 +697,29 @@ var computeGovFactors = function computeGovFactors(gov) {
     });
   }
   var totalSalaries = 0;
-  var _iteratorNormalCompletion3 = true;
-  var _didIteratorError3 = false;
-  var _iteratorError3 = undefined;
+  var _iteratorNormalCompletion6 = true;
+  var _didIteratorError6 = false;
+  var _iteratorError6 = undefined;
 
   try {
-    for (var _iterator3 = gov.population[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-      var _person = _step3.value;
+    for (var _iterator6 = gov.population[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+      var _person = _step6.value;
 
       if (_person.faction != 'Workers' && _person.faction != 'Business' && _person.income != null) {
         totalSalaries += _person.income;
       }
     }
   } catch (err) {
-    _didIteratorError3 = true;
-    _iteratorError3 = err;
+    _didIteratorError6 = true;
+    _iteratorError6 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion3 && _iterator3.return) {
-        _iterator3.return();
+      if (!_iteratorNormalCompletion6 && _iterator6.return) {
+        _iterator6.return();
       }
     } finally {
-      if (_didIteratorError3) {
-        throw _iteratorError3;
+      if (_didIteratorError6) {
+        throw _iteratorError6;
       }
     }
   }
@@ -651,65 +769,117 @@ var computeGovFactors = function computeGovFactors(gov) {
 var computeAllFactionValues = function computeAllFactionValues(gov) {
   for (var f in gov.factions) {
     var faction = gov.factions[f];
-    var _iteratorNormalCompletion4 = true;
-    var _didIteratorError4 = false;
-    var _iteratorError4 = undefined;
+    var _iteratorNormalCompletion7 = true;
+    var _didIteratorError7 = false;
+    var _iteratorError7 = undefined;
 
     try {
-      for (var _iterator4 = config.factionResources[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-        var resource = _step4.value;
+      for (var _iterator7 = config.factionResources[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+        var resource = _step7.value;
 
         if (faction[resource] == null) continue;
-        faction[resource].value += sumFactors(faction[resource].factors);
-        faction[resource].factors = [];
+        updateSimulatedValue(faction[resource]);
       }
     } catch (err) {
-      _didIteratorError4 = true;
-      _iteratorError4 = err;
+      _didIteratorError7 = true;
+      _iteratorError7 = err;
     } finally {
       try {
-        if (!_iteratorNormalCompletion4 && _iterator4.return) {
-          _iterator4.return();
+        if (!_iteratorNormalCompletion7 && _iterator7.return) {
+          _iterator7.return();
         }
       } finally {
-        if (_didIteratorError4) {
-          throw _iteratorError4;
+        if (_didIteratorError7) {
+          throw _iteratorError7;
         }
       }
     }
   }
 };
 
-var computeAllFactionFactors = function computeAllFactionFactors(gov) {};
+var computeAllFactionFactors = function computeAllFactionFactors(gov) {
+  // rederive informational values
+  for (var f in gov.factions) {
+    var faction = gov.factions[f];
+    // loyalty
+    var sum = 0;
+    var _iteratorNormalCompletion8 = true;
+    var _didIteratorError8 = false;
+    var _iteratorError8 = undefined;
+
+    try {
+      for (var _iterator8 = faction.people[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+        var person = _step8.value;
+
+        sum += person.loyalty.value;
+      }
+    } catch (err) {
+      _didIteratorError8 = true;
+      _iteratorError8 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion8 && _iterator8.return) {
+          _iterator8.return();
+        }
+      } finally {
+        if (_didIteratorError8) {
+          throw _iteratorError8;
+        }
+      }
+    }
+
+    faction.loyalty = sum / faction.people.length;
+  }
+};
 
 ////////////////////////////////////////////////////////////
 // Person-level
 ////////////////////////////////////////////////////////////
 
 var computeAllPersonValues = function computeAllPersonValues(gov) {
-  var _iteratorNormalCompletion5 = true;
-  var _didIteratorError5 = false;
-  var _iteratorError5 = undefined;
+  var _iteratorNormalCompletion9 = true;
+  var _didIteratorError9 = false;
+  var _iteratorError9 = undefined;
 
   try {
-    for (var _iterator5 = gov.population[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-      var person = _step5.value;
+    for (var _iterator9 = gov.population[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+      var person = _step9.value;
+      var _iteratorNormalCompletion10 = true;
+      var _didIteratorError10 = false;
+      var _iteratorError10 = undefined;
 
-      updateSimulatedValue(person.money);
-      updateSimulatedValue(person.corruption);
-      updateSimulatedValue(person.loyalty);
+      try {
+        for (var _iterator10 = config.personResources[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
+          var resource = _step10.value;
+
+          updateSimulatedValue(person[resource]);
+        }
+      } catch (err) {
+        _didIteratorError10 = true;
+        _iteratorError10 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion10 && _iterator10.return) {
+            _iterator10.return();
+          }
+        } finally {
+          if (_didIteratorError10) {
+            throw _iteratorError10;
+          }
+        }
+      }
     }
   } catch (err) {
-    _didIteratorError5 = true;
-    _iteratorError5 = err;
+    _didIteratorError9 = true;
+    _iteratorError9 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion5 && _iterator5.return) {
-        _iterator5.return();
+      if (!_iteratorNormalCompletion9 && _iterator9.return) {
+        _iterator9.return();
       }
     } finally {
-      if (_didIteratorError5) {
-        throw _iteratorError5;
+      if (_didIteratorError9) {
+        throw _iteratorError9;
       }
     }
   }
@@ -718,13 +888,13 @@ var computeAllPersonValues = function computeAllPersonValues(gov) {
 var computeAllPersonFactors = function computeAllPersonFactors(gov) {
 
   // money
-  var _iteratorNormalCompletion6 = true;
-  var _didIteratorError6 = false;
-  var _iteratorError6 = undefined;
+  var _iteratorNormalCompletion11 = true;
+  var _didIteratorError11 = false;
+  var _iteratorError11 = undefined;
 
   try {
-    for (var _iterator6 = gov.population[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-      var person = _step6.value;
+    for (var _iterator11 = gov.population[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
+      var person = _step11.value;
 
       if (person.faction != 'Workers' && person.faction != 'Business') {
         person.money.factors.push({
@@ -761,7 +931,7 @@ var computeAllPersonFactors = function computeAllPersonFactors(gov) {
 
       if (person.faction == 'Workers' || person.faction == 'Business') {
         person.money.factors.push({
-          value: -1 * person.income * (1 - person.corruption.value / 100) * gov.factions[person.faction].taxRate.value,
+          value: -1 * computeTaxLoad(gov, person),
           name: 'Taxes (after corruption)'
         });
       }
@@ -769,23 +939,58 @@ var computeAllPersonFactors = function computeAllPersonFactors(gov) {
 
     // loyalty
   } catch (err) {
-    _didIteratorError6 = true;
-    _iteratorError6 = err;
+    _didIteratorError11 = true;
+    _iteratorError11 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion6 && _iterator6.return) {
-        _iterator6.return();
+      if (!_iteratorNormalCompletion11 && _iterator11.return) {
+        _iterator11.return();
       }
     } finally {
-      if (_didIteratorError6) {
-        throw _iteratorError6;
+      if (_didIteratorError11) {
+        throw _iteratorError11;
       }
     }
   }
 };
 
+////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////
+
+var computeTaxLoad = function computeTaxLoad(gov, person) {
+  return person.income * (1 - person.corruption.value / 100) * gov.factions[person.faction].taxRate.value;
+};
+
+var applyOutcome = function applyOutcome(gov, outcome) {
+  var path = outcome.path,
+      value = outcome.value,
+      operation = outcome.operation;
+
+  var obj = gov;
+  for (var i = 0; i < path.length; i++) {
+    var p = path[i];
+    if (p == null) break; // don't apply upgrade if it doesn't have a valid path
+
+    // apply outcome
+    if (i == path.length - 1) {
+      if (operation == 'append') {
+        obj[p].push(value);
+      } else if (operation == 'multiply') {
+        obj[p] *= value;
+      } else if (operation == 'add') {
+        obj[p] += value;
+      } else {
+        obj[p] = value;
+      }
+    }
+
+    obj = obj[p];
+  }
+};
+
 module.exports = { gameReducer: gameReducer };
-},{"../config":1,"../utils/simulatedValues":14}],6:[function(require,module,exports){
+},{"../config":1,"../utils/simulatedValues":17}],6:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -841,15 +1046,17 @@ var rootReducer = function rootReducer(state, action) {
       {
         var _screen = action.screen;
 
-        var nextState = _extends({}, state, { screen: _screen });
+        var _nextState = _extends({}, state, { screen: _screen });
         if (_screen == 'LOBBY') {
-          nextState.game = null;
+          _nextState.game = null;
         }
-        return nextState;
+        return _nextState;
       }
     case 'SET_MODAL':
     case 'DISMISS_MODAL':
       return modalReducer(state, action);
+    case 'REJECT_PETITION':
+    case 'ACCEPT_PETITION':
     case 'TICK':
       {
         if (!state.game) return state;
@@ -858,6 +1065,7 @@ var rootReducer = function rootReducer(state, action) {
         });
       }
   }
+  return nextState;
 };
 
 //////////////////////////////////////
@@ -960,7 +1168,7 @@ function Button(props) {
 }
 
 module.exports = Button;
-},{"react":24}],9:[function(require,module,exports){
+},{"react":28}],9:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -990,18 +1198,93 @@ var InfoCard = function InfoCard(props) {
 };
 
 module.exports = InfoCard;
-},{"react":24}],10:[function(require,module,exports){
+},{"react":28}],10:[function(require,module,exports){
+'use strict';
+
+var React = require('react');
+var Button = require('./Button.react');
+
+var _require = require('../../utils/helpers'),
+    isMobile = _require.isMobile;
+
+function Modal(props) {
+  var title = props.title,
+      body = props.body,
+      buttons = props.buttons;
+
+  var height = props.height ? props.height : 450;
+
+  // using 2 rects to properly position width and height
+  var rect = document.getElementById('container').getBoundingClientRect();
+  var canvasRect = null;
+  var canvas = document.getElementById('canvas');
+  if (canvas != null) {
+    canvasRect = canvas.getBoundingClientRect();
+  } else {
+    canvasRect = rect;
+  }
+
+  var buttonHTML = buttons.map(function (b) {
+    return React.createElement(Button, {
+      key: "b_" + b.label,
+      disabled: !!b.disabled,
+      label: b.label, onClick: b.onClick
+    });
+  });
+
+  var width = props.width ? props.width : Math.min(rect.width * 0.8, 350);
+  return React.createElement(
+    'div',
+    {
+      style: {
+        position: 'absolute',
+        backgroundColor: 'whitesmoke',
+        border: '1px solid black',
+        padding: 4,
+        boxShadow: '2px 2px #666666',
+        borderRadius: 3,
+        color: '#46403a',
+        textAlign: 'center',
+        width: width,
+        top: isMobile() ? 0 : (canvasRect.height - height) / 2,
+        left: (rect.width - width) / 2
+      }
+    },
+    React.createElement(
+      'h3',
+      null,
+      React.createElement(
+        'b',
+        null,
+        title
+      )
+    ),
+    body,
+    React.createElement(
+      'div',
+      {
+        style: {}
+      },
+      buttonHTML
+    )
+  );
+}
+
+module.exports = Modal;
+},{"../../utils/helpers":16,"./Button.react":8,"react":28}],11:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
 var Button = require('./Components/Button.react');
 var InfoCard = require('./Components/InfoCard.react');
+var PetitionModal = require('./PetitionModal.react');
 
 var _require = require('../utils/display'),
     displayMoney = _require.displayMoney;
 
 var _require2 = require('../config'),
-    config = _require2.config;
+    config = _require2.config,
+    prototype = _require2.prototype;
 
 var _require3 = require('../utils/simulatedValues'),
     sumFactors = _require3.sumFactors;
@@ -1058,6 +1341,16 @@ function GovernmentCard(props) {
     React.createElement(ValueCard, { label: 'Production', value: gov.production }),
     React.createElement(ValueCard, { label: 'Legitimacy', value: gov.legitimacy }),
     React.createElement(ValueCard, { label: 'Land', value: gov.land }),
+    React.createElement(Button, { label: 'View Next Petition',
+      disabled: gov.petitionQueue.length == 0,
+      onClick: function onClick() {
+        dispatch({ type: 'SET_MODAL',
+          modal: React.createElement(PetitionModal, { dispatch: dispatch, fromQueue: true,
+            government: gov, petition: gov.petitionQueue[0]
+          })
+        });
+      }
+    }),
     React.createElement(Button, { label: 'Next Turn', onClick: function onClick() {
         return dispatch({ type: 'TICK' });
       } })
@@ -1140,12 +1433,18 @@ function FactionCard(props) {
     },
     React.createElement(
       InfoCard,
-      { style: { width: 230, height: 105 } },
+      { style: { width: 230, height: 125 } },
       React.createElement(
         'div',
         null,
         'Faction: ',
         faction.name
+      ),
+      React.createElement(
+        'div',
+        null,
+        'Avg. Loyalty: ',
+        faction.loyalty.toFixed(0)
       ),
       resources
     ),
@@ -1180,7 +1479,7 @@ function PersonCard(props) {
         height: 100,
         top: 0,
         position: 'absolute',
-        opacity: Math.abs(person.loyalty.value) / 100 / 2,
+        opacity: Math.abs(person.loyalty.value) / 100,
         backgroundColor: person.loyalty.value < 0 ? 'red' : 'green',
         zIndex: 2
       }
@@ -1388,7 +1687,7 @@ function ValueCard(props) {
 }
 
 module.exports = Game;
-},{"../config":1,"../utils/display":12,"../utils/simulatedValues":14,"./Components/Button.react":8,"./Components/InfoCard.react":9,"react":24}],11:[function(require,module,exports){
+},{"../config":1,"../utils/display":14,"../utils/simulatedValues":17,"./Components/Button.react":8,"./Components/InfoCard.react":9,"./PetitionModal.react":13,"react":28}],12:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -1411,7 +1710,7 @@ function Main(props) {
     React.Fragment,
     null,
     content,
-    state.modal
+    modal
   );
 }
 
@@ -1430,7 +1729,64 @@ function Lobby(props) {
 }
 
 module.exports = Main;
-},{"./Components/Button.react":8,"./Game.react":10,"react":24}],12:[function(require,module,exports){
+},{"./Components/Button.react":8,"./Game.react":11,"react":28}],13:[function(require,module,exports){
+'use strict';
+
+var React = require('react');
+var Button = require('./Components/Button.react');
+var InfoCard = require('./Components/InfoCard.react');
+var Modal = require('./Components/Modal.react');
+
+var _require = require('../utils/display'),
+    displayMoney = _require.displayMoney;
+
+var _require2 = require('../config'),
+    config = _require2.config,
+    prototype = _require2.prototype;
+
+var _require3 = require('../utils/simulatedValues'),
+    sumFactors = _require3.sumFactors;
+
+function PetitionModal(props) {
+  var dispatch = props.dispatch,
+      government = props.government,
+      petition = props.petition,
+      fromQueue = props.fromQueue;
+
+
+  return React.createElement(Modal, {
+    title: petition.name,
+    body: React.createElement(
+      'div',
+      null,
+      petition.description
+    ),
+    buttons: [{
+      label: 'Reject with Coercion',
+      disabled: government.coercion.value < petition.rejection.coercionThreshold,
+      onClick: function onClick() {
+        dispatch({ type: 'DISMISS_MODAL' });
+        dispatch({ type: 'REJECT_PETITION', petition: petition, fromQueue: fromQueue, withCoercion: true });
+      }
+    }, {
+      label: 'Reject with Legitimacy',
+      disabled: government.legitimacy.value < petition.rejection.legitimacyCost,
+      onClick: function onClick() {
+        dispatch({ type: 'DISMISS_MODAL' });
+        dispatch({ type: 'REJECT_PETITION', petition: petition, fromQueue: fromQueue, withCoercion: false });
+      }
+    }, {
+      label: 'Accept Petition',
+      onClick: function onClick() {
+        dispatch({ type: 'DISMISS_MODAL' });
+        dispatch({ type: 'ACCEPT_PETITION', petition: petition, fromQueue: fromQueue });
+      }
+    }]
+  });
+}
+
+module.exports = PetitionModal;
+},{"../config":1,"../utils/display":14,"../utils/simulatedValues":17,"./Components/Button.react":8,"./Components/InfoCard.react":9,"./Components/Modal.react":10,"react":28}],14:[function(require,module,exports){
 'use strict';
 
 var displayMoney = function displayMoney(money) {
@@ -1444,7 +1800,7 @@ var displayMoney = function displayMoney(money) {
 module.exports = {
   displayMoney: displayMoney
 };
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 var _favorabilityMatrix;
@@ -1483,7 +1839,178 @@ module.exports = {
   randomFaction: randomFaction,
   getInitialFavorability: getInitialFavorability
 };
-},{"../config":1,"../utils/stochastic":15}],14:[function(require,module,exports){
+},{"../config":1,"../utils/stochastic":18}],16:[function(require,module,exports){
+'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+var _require = require('./vectors'),
+    subtract = _require.subtract,
+    vectorTheta = _require.vectorTheta;
+
+var clamp = function clamp(val, min, max) {
+  return Math.min(Math.max(val, min), max);
+};
+
+// NOTE: for angles in radians being close to each other!
+var closeTo = function closeTo(a, b) {
+  var normalizedA = a % (2 * Math.PI);
+  var epsilon = 0.00001;
+  return Math.abs(normalizedA - b) < epsilon;
+};
+
+var sameArray = function sameArray(arrayA, arrayB) {
+  if (arrayA.length != arrayB.length) return false;
+  for (var i = 0; i < arrayA.length; i++) {
+    if (arrayA[i] != arrayB[i]) {
+      return false;
+    }
+  }
+  return true;
+};
+
+var thetaToDir = function thetaToDir(theta, noDiagonal) {
+  // 90 degree only:
+  if (noDiagonal) {
+    var _directions = ['left', 'down', 'right', 'up'];
+    var _deg = Math.round(theta * 180 / Math.PI);
+    if (Math.round(_deg / 45) % 2 != 0) return null;
+    return _directions[Math.round(_deg / 90) % 4];
+  }
+
+  // including 45 degree:
+  var directions = ['left', 'leftup', 'up', 'rightup', 'right', 'rightdown', 'down', 'leftdown'];
+  var deg = Math.round(theta * 180 / Math.PI);
+  if (Math.round(deg / 45) != deg / 45) return null;
+  return directions[Math.round(deg / 45) % 8];
+};
+
+var isDiagonalTheta = function isDiagonalTheta(theta) {
+  var dir = thetaToDir(theta);
+  return dir == 'leftdown' || dir == 'rightdown' || dir == 'rightup' || dir == 'leftup';
+};
+
+var isDiagonalMove = function isDiagonalMove(vecA, vecB) {
+  if (vecA == null || vecB == null) return false;
+  return isDiagonalTheta(vectorTheta(subtract(vecA, vecB)));
+};
+
+var encodePosition = function encodePosition(pos) {
+  return "" + pos.x + "," + pos.y;
+};
+
+var decodePosition = function decodePosition(pos) {
+  var _pos$split = pos.split(','),
+      _pos$split2 = _slicedToArray(_pos$split, 2),
+      x = _pos$split2[0],
+      y = _pos$split2[1];
+
+  return { x: x, y: y };
+};
+
+var getDisplayTime = function getDisplayTime(millis) {
+  var seconds = Math.floor(millis / 1000);
+  var minutes = Math.floor(seconds / 60);
+  var leftOverSeconds = seconds - minutes * 60;
+  var leftOverSecondsStr = leftOverSeconds == 0 ? '00' : '' + leftOverSeconds;
+  if (leftOverSeconds < 10 && leftOverSeconds != 0) {
+    leftOverSecondsStr = '0' + leftOverSecondsStr;
+  }
+
+  return minutes + ':' + leftOverSecondsStr;
+};
+
+var throttle = function throttle(func, args, wait) {
+  var inThrottle = false;
+  return function (ev) {
+    if (inThrottle) {
+      return;
+    }
+    func.apply(undefined, _toConsumableArray(args).concat([ev]));
+    inThrottle = true;
+    setTimeout(function () {
+      inThrottle = false;
+    }, wait);
+  };
+};
+
+function deepCopy(obj) {
+  if ((typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) !== 'object' || obj == null) {
+    return obj;
+  }
+
+  var copy = {};
+  for (var key in obj) {
+    if (_typeof(obj[key]) === 'object' && obj[key] != null) {
+      if (Array.isArray(obj[key])) {
+        copy[key] = [];
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
+
+        try {
+          for (var _iterator = obj[key][Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var elem = _step.value;
+
+            copy[key].push(deepCopy(elem));
+          }
+        } catch (err) {
+          _didIteratorError = true;
+          _iteratorError = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion && _iterator.return) {
+              _iterator.return();
+            }
+          } finally {
+            if (_didIteratorError) {
+              throw _iteratorError;
+            }
+          }
+        }
+      } else {
+        copy[key] = deepCopy(obj[key]);
+      }
+    } else {
+      copy[key] = obj[key];
+    }
+  }
+  return copy;
+}
+
+function isIpad() {
+  return navigator.platform == 'MacIntel' && navigator.maxTouchPoints > 0 && !navigator.userAgent.match(/iPhone/i);
+}
+
+function isMobile() {
+  var toMatch = [/Android/i, /webOS/i, /iPhone/i, /iPad/i, /iPod/i, /BlackBerry/i, /Windows Phone/i];
+
+  return toMatch.some(function (toMatchItem) {
+    return navigator.userAgent.match(toMatchItem);
+  }) || isIpad();
+}
+
+// HACK: when we're in electron window.require is a function
+function isElectron() {
+  // return true;
+  return window.require != null;
+}
+
+module.exports = {
+  clamp: clamp, closeTo: closeTo, sameArray: sameArray, thetaToDir: thetaToDir,
+  isDiagonalTheta: isDiagonalTheta, isDiagonalMove: isDiagonalMove,
+  encodePosition: encodePosition, decodePosition: decodePosition,
+  getDisplayTime: getDisplayTime,
+  isMobile: isMobile, isIpad: isIpad,
+  deepCopy: deepCopy,
+  throttle: throttle,
+  isElectron: isElectron
+};
+},{"./vectors":19}],17:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1582,7 +2109,7 @@ module.exports = {
   makeValue: makeValue,
   updateSimulatedValue: updateSimulatedValue
 };
-},{}],15:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 
 var floor = Math.floor,
@@ -1637,7 +2164,206 @@ module.exports = {
   oneOf: oneOf,
   weightedOneOf: weightedOneOf
 };
-},{}],16:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
+"use strict";
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var cos = Math.cos,
+    sin = Math.sin;
+
+
+var add = function add() {
+  for (var _len = arguments.length, vectors = Array(_len), _key = 0; _key < _len; _key++) {
+    vectors[_key] = arguments[_key];
+  }
+
+  var resultVec = { x: 0, y: 0 };
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = vectors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var v = _step.value;
+
+      resultVec.x += v.x;
+      resultVec.y += v.y;
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
+  return resultVec;
+};
+
+var equals = function equals(a, b) {
+  return a.x == b.x && a.y == b.y;
+};
+
+// NOTE: see vectorTheta note if subtracting vectors to find the angle between them
+var subtract = function subtract() {
+  for (var _len2 = arguments.length, vectors = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+    vectors[_key2] = arguments[_key2];
+  }
+
+  var resultVec = _extends({}, vectors[0]);
+  for (var i = 1; i < vectors.length; i++) {
+    resultVec.x -= vectors[i].x;
+    resultVec.y -= vectors[i].y;
+  }
+  return resultVec;
+};
+
+var makeVector = function makeVector(theta, magnitude) {
+  var x = magnitude * cos(theta);
+  var y = magnitude * sin(theta);
+  return { x: x, y: y };
+};
+
+var dist = function dist(vecA, vecB) {
+  return magnitude(subtract(vecA, vecB));
+};
+
+var scale = function scale(vec, scalar) {
+  return { x: vec.x * scalar, y: vec.y * scalar };
+};
+
+var magnitude = function magnitude(vector) {
+  var x = vector.x,
+      y = vector.y;
+
+  return Math.sqrt(x * x + y * y);
+};
+
+// what is the angle of this vector
+// NOTE: that when subtracting two vectors in order to compute the theta
+// between them, the target should be the first argument
+var vectorTheta = function vectorTheta(vector) {
+  // shift domain from [-Math.PI, Math.PI] to [0, 2 * Math.PI]
+  return (2 * Math.PI + Math.atan2(vector.y, vector.x)) % (2 * Math.PI);
+};
+
+var multiply = function multiply() {
+  for (var _len3 = arguments.length, vectors = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+    vectors[_key3] = arguments[_key3];
+  }
+
+  var resultVec = { x: 1, y: 1 };
+  for (var i = 0; i < vectors.length; i++) {
+    resultVec.x *= vectors[i].x;
+    resultVec.y *= vectors[i].y;
+  }
+  return resultVec;
+};
+
+var floor = function floor(vector) {
+  return {
+    x: Math.floor(vector.x),
+    y: Math.floor(vector.y)
+  };
+};
+
+var round = function round(vector) {
+  return {
+    x: Math.round(vector.x),
+    y: Math.round(vector.y)
+  };
+};
+
+var ceil = function ceil(vector) {
+  return {
+    x: Math.ceil(vector.x),
+    y: Math.ceil(vector.y)
+  };
+};
+
+var containsVector = function containsVector(array, vec) {
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = array[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var vector = _step2.value;
+
+      if (equals(vector, vec)) return true;
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
+
+  return false;
+};
+
+var abs = function abs(vector) {
+  return {
+    x: Math.abs(vector.x),
+    y: Math.abs(vector.y)
+  };
+};
+
+// given two positions, return a rectangle with the positions at opposite corners
+var toRect = function toRect(posA, posB) {
+  var rect = {
+    position: { x: Math.min(posA.x, posB.x), y: Math.min(posA.y, posB.y) },
+    width: Math.abs(posA.x - posB.x) + 1,
+    height: Math.abs(posA.y - posB.y) + 1
+  };
+  return rect;
+};
+
+var rotate = function rotate(vector, theta) {
+  var x = vector.x,
+      y = vector.y;
+
+  return {
+    x: cos(theta) * x - sin(theta) * y,
+    y: sin(theta) * x + cos(theta) * y
+  };
+};
+
+module.exports = {
+  add: add,
+  subtract: subtract,
+  equals: equals,
+  makeVector: makeVector,
+  scale: scale,
+  dist: dist,
+  magnitude: magnitude,
+  vectorTheta: vectorTheta,
+  multiply: multiply,
+  floor: floor,
+  round: round,
+  ceil: ceil,
+  containsVector: containsVector,
+  toRect: toRect,
+  rotate: rotate,
+  abs: abs
+};
+},{}],20:[function(require,module,exports){
 function _defineProperty(obj, key, value) {
   if (key in obj) {
     Object.defineProperty(obj, key, {
@@ -1655,7 +2381,7 @@ function _defineProperty(obj, key, value) {
 
 module.exports = _defineProperty;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
-},{}],17:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var defineProperty = require("./defineProperty.js");
 
 function ownKeys(object, enumerableOnly) {
@@ -1698,7 +2424,7 @@ function _objectSpread2(target) {
 
 module.exports = _objectSpread2;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
-},{"./defineProperty.js":16}],18:[function(require,module,exports){
+},{"./defineProperty.js":20}],22:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -1790,7 +2516,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],19:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v17.0.2
  * react-dom.development.js
@@ -28056,7 +28782,7 @@ exports.version = ReactVersion;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":32,"object-assign":18,"react":24,"scheduler":30,"scheduler/tracing":31}],20:[function(require,module,exports){
+},{"_process":36,"object-assign":22,"react":28,"scheduler":34,"scheduler/tracing":35}],24:[function(require,module,exports){
 /** @license React v17.0.2
  * react-dom.production.min.js
  *
@@ -28355,7 +29081,7 @@ exports.findDOMNode=function(a){if(null==a)return null;if(1===a.nodeType)return 
 exports.render=function(a,b,c){if(!rk(b))throw Error(y(200));return tk(null,a,b,!1,c)};exports.unmountComponentAtNode=function(a){if(!rk(a))throw Error(y(40));return a._reactRootContainer?(Xj(function(){tk(null,null,a,!1,function(){a._reactRootContainer=null;a[ff]=null})}),!0):!1};exports.unstable_batchedUpdates=Wj;exports.unstable_createPortal=function(a,b){return uk(a,b,2<arguments.length&&void 0!==arguments[2]?arguments[2]:null)};
 exports.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!rk(c))throw Error(y(200));if(null==a||void 0===a._reactInternals)throw Error(y(38));return tk(a,b,c,!1,d)};exports.version="17.0.2";
 
-},{"object-assign":18,"react":24,"scheduler":30}],21:[function(require,module,exports){
+},{"object-assign":22,"react":28,"scheduler":34}],25:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -28397,7 +29123,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/react-dom.development.js":19,"./cjs/react-dom.production.min.js":20,"_process":32}],22:[function(require,module,exports){
+},{"./cjs/react-dom.development.js":23,"./cjs/react-dom.production.min.js":24,"_process":36}],26:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v17.0.2
  * react.development.js
@@ -30734,7 +31460,7 @@ exports.version = ReactVersion;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":32,"object-assign":18}],23:[function(require,module,exports){
+},{"_process":36,"object-assign":22}],27:[function(require,module,exports){
 /** @license React v17.0.2
  * react.production.min.js
  *
@@ -30759,7 +31485,7 @@ key:d,ref:k,props:e,_owner:h}};exports.createContext=function(a,b){void 0===b&&(
 exports.lazy=function(a){return{$$typeof:v,_payload:{_status:-1,_result:a},_init:Q}};exports.memo=function(a,b){return{$$typeof:u,type:a,compare:void 0===b?null:b}};exports.useCallback=function(a,b){return S().useCallback(a,b)};exports.useContext=function(a,b){return S().useContext(a,b)};exports.useDebugValue=function(){};exports.useEffect=function(a,b){return S().useEffect(a,b)};exports.useImperativeHandle=function(a,b,c){return S().useImperativeHandle(a,b,c)};
 exports.useLayoutEffect=function(a,b){return S().useLayoutEffect(a,b)};exports.useMemo=function(a,b){return S().useMemo(a,b)};exports.useReducer=function(a,b,c){return S().useReducer(a,b,c)};exports.useRef=function(a){return S().useRef(a)};exports.useState=function(a){return S().useState(a)};exports.version="17.0.2";
 
-},{"object-assign":18}],24:[function(require,module,exports){
+},{"object-assign":22}],28:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -30770,7 +31496,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/react.development.js":22,"./cjs/react.production.min.js":23,"_process":32}],25:[function(require,module,exports){
+},{"./cjs/react.development.js":26,"./cjs/react.production.min.js":27,"_process":36}],29:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -31471,7 +32197,7 @@ exports.compose = compose;
 exports.createStore = createStore;
 
 }).call(this)}).call(this,require('_process'))
-},{"@babel/runtime/helpers/objectSpread2":17,"_process":32}],26:[function(require,module,exports){
+},{"@babel/runtime/helpers/objectSpread2":21,"_process":36}],30:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v0.20.2
  * scheduler-tracing.development.js
@@ -31822,7 +32548,7 @@ exports.unstable_wrap = unstable_wrap;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":32}],27:[function(require,module,exports){
+},{"_process":36}],31:[function(require,module,exports){
 /** @license React v0.20.2
  * scheduler-tracing.production.min.js
  *
@@ -31833,7 +32559,7 @@ exports.unstable_wrap = unstable_wrap;
  */
 'use strict';var b=0;exports.__interactionsRef=null;exports.__subscriberRef=null;exports.unstable_clear=function(a){return a()};exports.unstable_getCurrent=function(){return null};exports.unstable_getThreadID=function(){return++b};exports.unstable_subscribe=function(){};exports.unstable_trace=function(a,d,c){return c()};exports.unstable_unsubscribe=function(){};exports.unstable_wrap=function(a){return a};
 
-},{}],28:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v0.20.2
  * scheduler.development.js
@@ -32483,7 +33209,7 @@ exports.unstable_wrapCallback = unstable_wrapCallback;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":32}],29:[function(require,module,exports){
+},{"_process":36}],33:[function(require,module,exports){
 /** @license React v0.20.2
  * scheduler.production.min.js
  *
@@ -32505,7 +33231,7 @@ exports.unstable_next=function(a){switch(P){case 1:case 2:case 3:var b=3;break;d
 exports.unstable_scheduleCallback=function(a,b,c){var d=exports.unstable_now();"object"===typeof c&&null!==c?(c=c.delay,c="number"===typeof c&&0<c?d+c:d):c=d;switch(a){case 1:var e=-1;break;case 2:e=250;break;case 5:e=1073741823;break;case 4:e=1E4;break;default:e=5E3}e=c+e;a={id:N++,callback:b,priorityLevel:a,startTime:c,expirationTime:e,sortIndex:-1};c>d?(a.sortIndex=c,H(M,a),null===J(L)&&a===J(M)&&(S?h():S=!0,g(U,c-d))):(a.sortIndex=e,H(L,a),R||Q||(R=!0,f(V)));return a};
 exports.unstable_wrapCallback=function(a){var b=P;return function(){var c=P;P=b;try{return a.apply(this,arguments)}finally{P=c}}};
 
-},{}],30:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -32516,7 +33242,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/scheduler.development.js":28,"./cjs/scheduler.production.min.js":29,"_process":32}],31:[function(require,module,exports){
+},{"./cjs/scheduler.development.js":32,"./cjs/scheduler.production.min.js":33,"_process":36}],35:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -32527,7 +33253,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/scheduler-tracing.development.js":26,"./cjs/scheduler-tracing.production.min.js":27,"_process":32}],32:[function(require,module,exports){
+},{"./cjs/scheduler-tracing.development.js":30,"./cjs/scheduler-tracing.production.min.js":31,"_process":36}],36:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 

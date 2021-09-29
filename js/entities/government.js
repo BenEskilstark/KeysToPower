@@ -28,9 +28,9 @@ const makeRandomGovernment = () => {
     Army: makeFaction('Army', faction),
     ["Secret Police"]: makeFaction('Secret Police', faction),
     Business: makeFaction('Business', faction),
+    Workers: makeFaction('Workers', faction),
     Clergy: makeFaction('Clergy', faction),
     Parliament: makeFaction('Parliament', faction),
-    Workers: makeFaction('Workers', faction),
   };
 
   const gov = {
@@ -46,7 +46,36 @@ const makeRandomGovernment = () => {
       ...factions["Parliament"].people,
     ],
 
-    petitionQueue: [],
+    petitionQueue: [
+      {
+        name: 'Lower Business Taxes',
+        description: 'Lower Taxes by 25 % points',
+        owner: null,
+        outcomes: [
+          {
+            name: 'Lower Business Taxes',
+            path: ['factions', 'Business', 'taxRate', 'factors'],
+            value: {name: 'Lower Business Taxes', value: -0.25},
+            operation: 'append',
+          },
+        ],
+        rejection: {
+          legitimacyCost: 20,
+          rejectionOutcomes: [
+            {
+              name: 'Spend 20 Legitimacy to avoid lowering taxes',
+              path: ['legitimacy', 'factors'],
+              value: {name: 'Don\'t Lower Business Taxes', value: -20},
+              operation: 'append',
+            },
+          ],
+          coercionThreshold: 10,
+          coercionOutcomes: [
+            // TODO
+          ],
+        },
+      },
+    ],
     turn: 0,
 
     coercion: makeValue(0),

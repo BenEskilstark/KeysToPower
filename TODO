@@ -11,17 +11,13 @@
 
 
 - - - - - - - - TODO - - - - - - -
-  - streamline how values are computed in gameReducer
-  - faction InfoCard should be split into resources, finances, aggregate info
+  - off-by-one turn for lowering taxes
   - PetitionDialog
     - print outcomes
-    - accept button
-    - use legitimacy to reject
-    - pass coercion threshold to reject (w/loyalty penalty -- for who?)
-    - apply outcomes
     - cross-reference outcomes with desires
       - add desires to some people
       - update their loyalty
+      - implement outcomes for coercion
 
   - Simulation
     - money

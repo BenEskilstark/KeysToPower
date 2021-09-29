@@ -30,14 +30,38 @@ const gameReducer = (game, action) => {
         let totalTaxes = 0;
         for (const person of gov.population) {
           if (person.faction == 'Workers' || person.faction == 'Business') {
-            totalTaxes += person.income * (1 - person.corruption.value / 100) *
-              gov.factions[person.faction].taxRate.value;
+            totalTaxes += computeTaxLoad(gov, person);
           }
         }
         gov.money.factors.push({
           value: totalTaxes,
           name: 'Tax Revenue',
         });
+      }
+      return game;
+    }
+    case 'REJECT_PETITION': {
+      const {petition, withCoercion, fromQueue} = action;
+      let outcomes = petition.rejection.rejectionOutcomes;
+      if (withCoercion) {
+        outcomes = petition.rejection.coercionOutcomes;
+      }
+      for (const outcome of outcomes) {
+        applyOutcome(game.government, outcome);
+      }
+      if (fromQueue) {
+        game.government.petitionQueue.shift();
+      }
+      return game;
+    }
+    case 'ACCEPT_PETITION': {
+      const {petition, fromQueue} = action;
+      for (const outcome of petition.outcomes) {
+        applyOutcome(game.government, outcome);
+      }
+      console.trace(game.goverment);
+      if (fromQueue) {
+        game.government.petitionQueue.shift();
       }
       return game;
     }
@@ -60,8 +84,7 @@ const computeGovFactors = (gov) => {
   let totalTaxes = 0;
   for (const person of gov.population) {
     if (person.faction == 'Workers' || person.faction == 'Business') {
-      totalTaxes += person.income * (1 - person.corruption.value / 100) *
-        gov.factions[person.faction].taxRate.value;
+      totalTaxes += computeTaxLoad(gov, person);
     }
   }
   if (totalTaxes > 0) {
@@ -136,6 +159,15 @@ const computeAllFactionValues = (gov) => {
 
 const computeAllFactionFactors = (gov) => {
   // rederive informational values
+  for (const f in gov.factions) {
+    const faction = gov.factions[f];
+    // loyalty
+    let sum = 0;
+    for (const person of faction.people) {
+      sum += person.loyalty.value;
+    }
+    faction.loyalty = sum / faction.people.length;
+  }
 };
 
 ////////////////////////////////////////////////////////////
@@ -191,8 +223,7 @@ const computeAllPersonFactors = (gov) => {
 
     if (person.faction == 'Workers' || person.faction == 'Business') {
       person.money.factors.push({
-        value: -1 * person.income * (1 - person.corruption.value / 100)
-          * gov.factions[person.faction].taxRate.value,
+        value: -1 * computeTaxLoad(gov, person),
         name: 'Taxes (after corruption)',
       });
     }
@@ -200,6 +231,40 @@ const computeAllPersonFactors = (gov) => {
   }
 
   // loyalty
+};
+
+////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////
+
+const computeTaxLoad = (gov, person): number => {
+  return person.income *
+    (1 - person.corruption.value / 100) *
+    gov.factions[person.faction].taxRate.value;
+};
+
+const applyOutcome = (gov, outcome): void => {
+  const {path, value, operation} = outcome;
+  let obj = gov;
+  for (let i = 0; i < path.length; i++) {
+    const p = path[i];
+    if (p == null) break; // don't apply upgrade if it doesn't have a valid path
+
+    // apply outcome
+    if (i == path.length - 1) {
+      if (operation == 'append') {
+        obj[p].push(value);
+      } else if (operation == 'multiply') {
+        obj[p] *= value;
+      } else if (operation == 'add') {
+        obj[p] += value;
+      } else {
+        obj[p] = value;
+      }
+    }
+
+    obj = obj[p];
+  }
 };
 
 module.exports = {gameReducer}

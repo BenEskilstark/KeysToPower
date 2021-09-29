@@ -15,7 +15,7 @@ type Props = {
 };
 
 function Modal(props: Props): React.Node {
-  const {content, title, body, buttons} = props;
+  const {title, body, buttons} = props;
   const height = props.height ? props.height : 450;
 
   // using 2 rects to properly position width and height

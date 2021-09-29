@@ -3,8 +3,9 @@
 const React = require('react');
 const Button = require('./Components/Button.react');
 const InfoCard = require('./Components/InfoCard.react');
+const PetitionModal = require('./PetitionModal.react');
 const {displayMoney} = require('../utils/display');
-const {config} = require('../config');
+const {config, prototype} = require('../config');
 const {sumFactors} = require('../utils/simulatedValues');
 
 function Game(props): React.Node {
@@ -44,6 +45,16 @@ function GovernmentCard(props): React.Node {
       <ValueCard label="Production" value={gov.production} />
       <ValueCard label="Legitimacy" value={gov.legitimacy} />
       <ValueCard label="Land" value={gov.land} />
+      <Button label="View Next Petition"
+        disabled={gov.petitionQueue.length == 0}
+        onClick={() => {
+          dispatch({type: 'SET_MODAL',
+            modal: (<PetitionModal dispatch={dispatch} fromQueue={true}
+              government={gov} petition={gov.petitionQueue[0]}
+            />)
+          });
+        }}
+      />
       <Button label="Next Turn" onClick={() => dispatch({type: 'TICK'})} />
     </InfoCard>
   );
@@ -83,8 +94,9 @@ function FactionCard(props): React.Node {
         height: '100%',
       }}
     >
-      <InfoCard style={{width: 230, height: 105}} >
+      <InfoCard style={{width: 230, height: 125}} >
         <div>Faction: {faction.name}</div>
+        <div>Avg. Loyalty: {faction.loyalty.toFixed(0)}</div>
         {resources}
       </InfoCard>
       <div>
@@ -115,7 +127,7 @@ function PersonCard(props) {
           height: 100,
           top: 0,
           position: 'absolute',
-          opacity: (Math.abs(person.loyalty.value)) / 100 / 2,
+          opacity: (Math.abs(person.loyalty.value)) / 100,
           backgroundColor: person.loyalty.value < 0 ? 'red' : 'green',
           zIndex: 2,
         }}
