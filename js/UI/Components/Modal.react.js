@@ -51,6 +51,7 @@ function Modal(props: Props): React.Node {
         width,
         top: isMobile() ? 0 : (canvasRect.height - height) / 2,
         left: (rect.width - width) / 2,
+        zIndex: 10,
       }}
     >
       <h3><b>{title}</b></h3>

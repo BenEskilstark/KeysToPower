@@ -63,6 +63,21 @@ const config = {
     'Chamberlain', 'Churchill', 'Jackson', 'Kennedy', 'Franklin',
     'Truman', 'MacArthur', 'Lenin', 'Trotsky',
   ],
+
+  resourceToLoyalty: {
+    land: (n) => n,
+    tanks: (n) => n / 10,
+    taxRate: (n) => -10 * n,
+    minimumWage: (n) => n,
+    workHours: (n) => -1 * n / 10,
+    censorship: (n) => -1 * n,
+    propaganda: (n) => n,
+    tithe: (n) => 100 * n,
+    churches: (n) => n,
+    regulation: (n) => -1 * n / 10,
+    factories: (n) => n,
+  },
+
   dispositions: ['zealot', 'realist', 'moderate', 'idealist', 'radical'],
 
 };
@@ -82,12 +97,11 @@ const prototype = {
     // resources
     land: 5,
     factories: 1,
+    regulation: 10,
 
     // finances
     income: 0, // computed later
     taxRate: 0.5,
-    minimumWage: 1,
-    workHours: 60,
     costs: -500,
   },
   CEO: {
@@ -137,7 +151,7 @@ const prototype = {
     // resources
     land: 5,
     churches: 1,
-    tithe: 10,
+    tithe: 0.1,
 
     // finances
     income: 0, // computed later
@@ -170,6 +184,7 @@ const prototype = {
 
     // resources
     land: 1,
+
   },
   ["Union Leader"]: {
     moneyThreshold: 'Middle Class',

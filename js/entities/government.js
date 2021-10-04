@@ -71,7 +71,12 @@ const makeRandomGovernment = () => {
           ],
           coercionThreshold: 10,
           coercionOutcomes: [
-            // TODO
+            // {
+            //   name: 'Reduce loyalty by 2 for not decreasing tax rate',
+            //   path: ['faction', 'Business', 'people',],
+            //   value: {name: 'Don\'t Lower Business Taxes', value: -2},
+            //   operation: 'forEach',
+            // },
           ],
         },
       },

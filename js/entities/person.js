@@ -56,6 +56,7 @@ const makePerson = (faction: FactionName, title: ?Title): Person => {
     prototype[faction].loyalty - 5,
     prototype[faction].loyalty + 5,
   ));
+  person.loyalty.isNonCumulative = true;
 
   // effects of disposition
   // TODO

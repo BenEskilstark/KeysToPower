@@ -105,7 +105,7 @@ const computeGovFactors = (gov) => {
   });
   gov.coercion.factors.push({
     value: gov.factions["Secret Police"].censorship.value,
-    name: 'Police Surveillance',
+    name: 'Censorship',
   });
 
   // production
@@ -228,6 +228,35 @@ const computeAllPersonFactors = (gov) => {
   }
 
   // loyalty
+  for (const person of gov.population) {
+    for (const resource in config.resourceToLoyalty) {
+      const fn = config.resourceToLoyalty[resource];
+
+      // HACK: one-offs
+      let faction = person.faction;
+      if (faction == 'Secret Police' &&
+        (resource == 'propaganda' || resource == 'censorship')
+      ) {
+        continue;
+      }
+      if ((faction == 'Workers' || faction == 'Business') &&
+        (resource == 'propaganda' || resource == 'censorship')
+      ) {
+        faction = 'Secret Police';
+      }
+
+      if (prototype[faction][resource] == null) {
+        continue;
+      }
+
+      const value = fn(gov.factions[faction][resource].value);
+
+      person.loyalty.factors.push({
+        name: 'Loyalty from ' + resource,
+        value,
+      });
+    }
+  }
 };
 
 ////////////////////////////////////////////////////////////

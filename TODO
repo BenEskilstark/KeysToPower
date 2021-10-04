@@ -1,8 +1,9 @@
 
 - - - - - - Simulation Issues - - - - - - -
   - petitions
-    - How are they generated?
+    - how to apply loyalty penalty
     - how to correlate petitions that you pass w/people's desires?
+    - How are they generated?
   - balance of collapse vs time to affect things
   - disposition vs traits -- how should people vary?
   - resources
@@ -11,8 +12,18 @@
 
 - - - - - - - - TODO - - - - - - -
   - loyalty
-    - each resource adds 1 to overall loyalty (loyalty of each person)
+    - issues
+      - fix off-by-one for calculation
+    - factors
+      - coercion
+      - money/income
     - what does each faction (per person) do when loyalty gets low
+      - workers: protest, strike, revolt
+      - business: slow work, increase corruption, plot assassination
+      - secret police: plot assassination
+      - military: coercion penalty, plot coup
+      - clergy: less legitimacy, reduce worker loyalty
+      - parliament: less legitimacy, reduce worker loyalty, plot coup
     - faction leaders expect to move up in threshold
     - switch loyalty to favorability
 

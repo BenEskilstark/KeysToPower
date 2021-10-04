@@ -33,6 +33,43 @@ var config = {
   // people
   firstNames: ['Hugo', 'Josef', 'Augusto', 'Fidel', 'George', 'John', 'Karl', 'Adolf', 'Pablo', 'Andrew', 'Winston', 'Joshua', 'Dwight', 'Pol', 'Vladimir', 'Leon', 'Violeta', 'Rosario', 'Elizabeth'],
   lastNames: ['Mao', 'Castro', 'Marx', 'Stalin', 'Tito', 'Bush', 'Johnson', 'Nehru', 'Ortega', 'Chavez', 'Sandino', 'Morales', 'Chamorro', 'Somoza', 'Chamberlain', 'Churchill', 'Jackson', 'Kennedy', 'Franklin', 'Truman', 'MacArthur', 'Lenin', 'Trotsky'],
+
+  resourceToLoyalty: {
+    land: function land(n) {
+      return n;
+    },
+    tanks: function tanks(n) {
+      return n / 10;
+    },
+    taxRate: function taxRate(n) {
+      return -10 * n;
+    },
+    minimumWage: function minimumWage(n) {
+      return n;
+    },
+    workHours: function workHours(n) {
+      return -1 * n / 10;
+    },
+    censorship: function censorship(n) {
+      return -1 * n;
+    },
+    propaganda: function propaganda(n) {
+      return n;
+    },
+    tithe: function tithe(n) {
+      return 100 * n;
+    },
+    churches: function churches(n) {
+      return n;
+    },
+    regulation: function regulation(n) {
+      return -1 * n / 10;
+    },
+    factories: function factories(n) {
+      return n;
+    }
+  },
+
   dispositions: ['zealot', 'realist', 'moderate', 'idealist', 'radical']
 
 };
@@ -52,12 +89,11 @@ var prototype = (_prototype = {
     // resources
     land: 5,
     factories: 1,
+    regulation: 10,
 
     // finances
     income: 0, // computed later
     taxRate: 0.5,
-    minimumWage: 1,
-    workHours: 60,
     costs: -500
   },
   CEO: {
@@ -103,7 +139,7 @@ var prototype = (_prototype = {
     // resources
     land: 5,
     churches: 1,
-    tithe: 10,
+    tithe: 0.1,
 
     // finances
     income: 0, // computed later
@@ -132,6 +168,7 @@ var prototype = (_prototype = {
 
     // resources
     land: 1
+
   }
 }, _defineProperty(_prototype, "Union Leader", {
   moneyThreshold: 'Middle Class'
@@ -241,7 +278,12 @@ var makeRandomGovernment = function makeRandomGovernment() {
         }],
         coercionThreshold: 10,
         coercionOutcomes: [
-          // TODO
+          // {
+          //   name: 'Reduce loyalty by 2 for not decreasing tax rate',
+          //   path: ['faction', 'Business', 'people',],
+          //   value: {name: 'Don\'t Lower Business Taxes', value: -2},
+          //   operation: 'forEach',
+          // },
         ]
       }
     }],
@@ -437,6 +479,7 @@ var makePerson = function makePerson(faction, title) {
   }
 
   person.loyalty = makeValue(normalIn(prototype[faction].loyalty - 5, prototype[faction].loyalty + 5));
+  person.loyalty.isNonCumulative = true;
 
   // effects of disposition
   // TODO
@@ -704,7 +747,7 @@ var computeGovFactors = function computeGovFactors(gov) {
   });
   gov.coercion.factors.push({
     value: gov.factions["Secret Police"].censorship.value,
-    name: 'Police Surveillance'
+    name: 'Censorship'
   });
 
   // production
@@ -924,6 +967,53 @@ var computeAllPersonFactors = function computeAllPersonFactors(gov) {
     } finally {
       if (_didIteratorError10) {
         throw _iteratorError10;
+      }
+    }
+  }
+
+  var _iteratorNormalCompletion11 = true;
+  var _didIteratorError11 = false;
+  var _iteratorError11 = undefined;
+
+  try {
+    for (var _iterator11 = gov.population[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
+      var _person2 = _step11.value;
+
+      for (var resource in config.resourceToLoyalty) {
+        var fn = config.resourceToLoyalty[resource];
+
+        // HACK: one-offs
+        var faction = _person2.faction;
+        if (faction == 'Secret Police' && (resource == 'propaganda' || resource == 'censorship')) {
+          continue;
+        }
+        if ((faction == 'Workers' || faction == 'Business') && (resource == 'propaganda' || resource == 'censorship')) {
+          faction = 'Secret Police';
+        }
+
+        if (prototype[faction][resource] == null) {
+          continue;
+        }
+
+        var value = fn(gov.factions[faction][resource].value);
+
+        _person2.loyalty.factors.push({
+          name: 'Loyalty from ' + resource,
+          value: value
+        });
+      }
+    }
+  } catch (err) {
+    _didIteratorError11 = true;
+    _iteratorError11 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion11 && _iterator11.return) {
+        _iterator11.return();
+      }
+    } finally {
+      if (_didIteratorError11) {
+        throw _iteratorError11;
       }
     }
   }
@@ -1222,7 +1312,8 @@ function Modal(props) {
         textAlign: 'center',
         width: width,
         top: isMobile() ? 0 : (canvasRect.height - height) / 2,
-        left: (rect.width - width) / 2
+        left: (rect.width - width) / 2,
+        zIndex: 10
       }
     },
     React.createElement(
